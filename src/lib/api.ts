@@ -1,0 +1,124 @@
+export type Feed = "top" | "new" | "best" | "ask" | "show" | "jobs";
+
+export type StoryHit = {
+  objectID: string;
+  title: string;
+  url: string | null;
+  points: number | null;
+  num_comments: number | null;
+  author: string;
+  created_at_i: number;
+};
+
+export type CommentNode = {
+  id: number;
+  author: string | null;
+  text: string | null;
+  created_at_i: number;
+  children: CommentNode[];
+};
+
+export type StoryItem = {
+  id: number;
+  title: string;
+  url: string | null;
+  points: number | null;
+  author: string;
+  text: string | null;
+  created_at_i: number;
+  children: CommentNode[];
+};
+
+const FIREBASE = "https://hacker-news.firebaseio.com/v0";
+const ALGOLIA = "https://hn.algolia.com/api/v1";
+
+const FEED_ENDPOINT: Record<Feed, string> = {
+  top: "topstories",
+  new: "newstories",
+  best: "beststories",
+  ask: "askstories",
+  show: "showstories",
+  jobs: "jobstories",
+};
+
+type FirebaseItem = {
+  id: number;
+  type?: "story" | "comment" | "job" | "poll" | "pollopt";
+  by?: string;
+  time?: number;
+  title?: string;
+  url?: string;
+  text?: string;
+  score?: number;
+  descendants?: number;
+  kids?: number[];
+  dead?: boolean;
+  deleted?: boolean;
+};
+
+async function fetchJson<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+  return (await res.json()) as T;
+}
+
+function toHit(item: FirebaseItem): StoryHit {
+  return {
+    objectID: String(item.id),
+    title: item.title ?? "(untitled)",
+    url: item.url ?? null,
+    points: item.score ?? null,
+    num_comments: item.descendants ?? 0,
+    author: item.by ?? "—",
+    created_at_i: item.time ?? 0,
+  };
+}
+
+export async function fetchFeed(
+  feed: Feed,
+  limit = 30,
+): Promise<StoryHit[]> {
+  const ids = await fetchJson<number[]>(
+    `${FIREBASE}/${FEED_ENDPOINT[feed]}.json`,
+  );
+  const slice = ids.slice(0, limit);
+  const items = await Promise.all(
+    slice.map((id) => fetchJson<FirebaseItem>(`${FIREBASE}/item/${id}.json`)),
+  );
+  return items.filter((it) => it && !it.dead && !it.deleted).map(toHit);
+}
+
+type AlgoliaItem = {
+  id: number;
+  title: string | null;
+  url: string | null;
+  points: number | null;
+  author: string;
+  text: string | null;
+  created_at_i: number;
+  children: AlgoliaItem[];
+};
+
+function normalizeComments(node: AlgoliaItem): CommentNode {
+  return {
+    id: node.id,
+    author: node.author ?? null,
+    text: node.text,
+    created_at_i: node.created_at_i,
+    children: (node.children ?? []).map(normalizeComments),
+  };
+}
+
+export async function fetchStory(id: string | number): Promise<StoryItem> {
+  const data = await fetchJson<AlgoliaItem>(`${ALGOLIA}/items/${id}`);
+  return {
+    id: data.id,
+    title: data.title ?? "(untitled)",
+    url: data.url,
+    points: data.points,
+    author: data.author,
+    text: data.text,
+    created_at_i: data.created_at_i,
+    children: (data.children ?? []).map(normalizeComments),
+  };
+}

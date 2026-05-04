@@ -1,0 +1,196 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    monospace;
+
+  --color-bg: #fbfaf7;
+  --color-bg-elev: #ffffff;
+  --color-fg: #18181b;
+  --color-fg-muted: #6b7280;
+  --color-border: rgba(0, 0, 0, 0.06);
+  --color-accent: #ff5c1a;
+  --color-accent-2: #ff2d8a;
+
+  --shadow-card:
+    0 1px 1px rgba(0, 0, 0, 0.02), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
+}
+
+.dark {
+  --color-bg: #0a0a0c;
+  --color-bg-elev: #121215;
+  --color-fg: #f4f4f5;
+  --color-fg-muted: #8a8a93;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --shadow-card:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 8px 24px -8px rgba(0, 0, 0, 0.6);
+}
+
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+  body {
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  /* Ambient gradient backdrop */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: -1;
+    background:
+      radial-gradient(
+        ellipse 80% 50% at 50% -10%,
+        color-mix(in oklab, var(--color-accent) 12%, transparent),
+        transparent 60%
+      ),
+      radial-gradient(
+        ellipse 60% 40% at 90% 10%,
+        color-mix(in oklab, var(--color-accent-2) 10%, transparent),
+        transparent 60%
+      );
+  }
+
+  ::selection {
+    background: color-mix(in oklab, var(--color-accent) 35%, transparent);
+    color: var(--color-fg);
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in oklab, var(--color-fg) 12%, transparent);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in oklab, var(--color-fg) 22%, transparent);
+    background-clip: padding-box;
+    border: 2px solid transparent;
+  }
+}
+
+@layer components {
+  .card {
+    background: var(--color-bg-elev);
+    border: 1px solid var(--color-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-card);
+  }
+
+  .accent-text {
+    background: linear-gradient(
+      135deg,
+      var(--color-accent),
+      var(--color-accent-2)
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .accent-bg {
+    background: linear-gradient(
+      135deg,
+      var(--color-accent),
+      var(--color-accent-2)
+    );
+  }
+
+  .ring-accent {
+    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 35%, transparent);
+  }
+}
+
+/* Render HN comment HTML nicely */
+.comment-body {
+  line-height: 1.65;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+.comment-body p {
+  margin: 0 0 0.75em;
+}
+.comment-body p:last-child {
+  margin-bottom: 0;
+}
+.comment-body a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+}
+.comment-body a:hover {
+  color: var(--color-accent-2);
+}
+.comment-body pre,
+.comment-body code {
+  font-family: var(--font-mono);
+  font-size: 0.85em;
+  background: color-mix(in oklab, var(--color-fg) 6%, transparent);
+  padding: 0.1em 0.3em;
+  border-radius: 4px;
+}
+.comment-body pre {
+  padding: 0.75em 1em;
+  overflow-x: auto;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    color-mix(in oklab, var(--color-fg) 6%, transparent) 0%,
+    color-mix(in oklab, var(--color-fg) 12%, transparent) 50%,
+    color-mix(in oklab, var(--color-fg) 6%, transparent) 100%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.fade-in-up {
+  animation: fadeInUp 0.35s ease-out both;
+}
