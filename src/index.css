@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @theme {
   --font-sans:
     "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
@@ -9,28 +7,84 @@
   --font-mono:
     "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
     monospace;
-
-  --color-bg: #fbfaf7;
-  --color-bg-elev: #ffffff;
-  --color-fg: #18181b;
-  --color-fg-muted: #6b7280;
-  --color-border: rgba(0, 0, 0, 0.06);
-  --color-accent: #ff5c1a;
-  --color-accent-2: #ff2d8a;
-
-  --shadow-card:
-    0 1px 1px rgba(0, 0, 0, 0.02), 0 4px 12px -2px rgba(0, 0, 0, 0.04);
 }
 
-.dark {
+/* ---------- Themes ---------- */
+/* Each theme defines a complete palette and its color-scheme. */
+
+/* Hatch — warm dark (default) */
+.theme-hatch {
+  color-scheme: dark;
   --color-bg: #0a0a0c;
   --color-bg-elev: #121215;
   --color-fg: #f4f4f5;
   --color-fg-muted: #8a8a93;
   --color-border: rgba(255, 255, 255, 0.07);
+  --color-accent: #ff5c1a;
+  --color-accent-2: #ff2d8a;
   --shadow-card:
     0 1px 0 rgba(255, 255, 255, 0.03) inset,
     0 8px 24px -8px rgba(0, 0, 0, 0.6);
+}
+
+/* Mist — cool dark */
+.theme-mist {
+  color-scheme: dark;
+  --color-bg: #0a0e14;
+  --color-bg-elev: #131923;
+  --color-fg: #e6ecf2;
+  --color-fg-muted: #7d8898;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-accent: #22d3ee;
+  --color-accent-2: #6366f1;
+  --shadow-card:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 8px 24px -8px rgba(0, 0, 0, 0.6);
+}
+
+/* Forest — green dark */
+.theme-forest {
+  color-scheme: dark;
+  --color-bg: #0a1410;
+  --color-bg-elev: #112019;
+  --color-fg: #e7efe9;
+  --color-fg-muted: #7a8b81;
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-accent: #10b981;
+  --color-accent-2: #84cc16;
+  --shadow-card:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 8px 24px -8px rgba(0, 0, 0, 0.5);
+}
+
+/* Paper — warm light */
+.theme-paper {
+  color-scheme: light;
+  --color-bg: #f7f1e3;
+  --color-bg-elev: #ffffff;
+  --color-fg: #1a1817;
+  --color-fg-muted: #6b6661;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-accent: #c2410c;
+  --color-accent-2: #b91c1c;
+  --shadow-card:
+    0 1px 1px rgba(0, 0, 0, 0.02),
+    0 4px 12px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Mono — true grayscale dark */
+.theme-mono {
+  color-scheme: dark;
+  --color-bg: #0a0a0a;
+  --color-bg-elev: #161616;
+  --color-fg: #f5f5f5;
+  --color-fg-muted: #888888;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-accent: #e5e5e5;
+  --color-accent-2: #a3a3a3;
+  --shadow-card:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 8px 24px -8px rgba(0, 0, 0, 0.7);
 }
 
 @layer base {
@@ -48,7 +102,7 @@
     font-feature-settings: "ss01", "cv11";
   }
 
-  /* Ambient gradient backdrop */
+  /* Ambient gradient backdrop, themed via accent variables */
   body::before {
     content: "";
     position: fixed;
@@ -73,7 +127,6 @@
     color: var(--color-fg);
   }
 
-  /* Custom scrollbar */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -122,11 +175,11 @@
   }
 
   .ring-accent {
-    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-accent) 35%, transparent);
+    box-shadow: 0 0 0 1px
+      color-mix(in oklab, var(--color-accent) 35%, transparent);
   }
 }
 
-/* Render HN comment HTML nicely */
 .comment-body {
   line-height: 1.65;
   word-break: break-word;
@@ -168,7 +221,6 @@
     background-position: 400px 0;
   }
 }
-
 .skeleton {
   background: linear-gradient(
     90deg,

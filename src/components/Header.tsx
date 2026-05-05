@@ -1,6 +1,8 @@
 import { useRef, useState } from "react";
 import type { Feed } from "../lib/api";
+import type { ThemeId } from "../lib/themes";
 import { parseHnId } from "../lib/format";
+import { ThemeSwitcher } from "./ThemeSwitcher";
 
 const FEEDS: { id: Feed; label: string }[] = [
   { id: "top", label: "Top" },
@@ -15,8 +17,8 @@ type Props = {
   feed: Feed | null;
   onFeedChange: (feed: Feed) => void;
   onOpenStory: (id: string) => void;
-  theme: "light" | "dark";
-  onToggleTheme: () => void;
+  theme: ThemeId;
+  onThemeChange: (theme: ThemeId) => void;
 };
 
 export function Header({
@@ -24,7 +26,7 @@ export function Header({
   onFeedChange,
   onOpenStory,
   theme,
-  onToggleTheme,
+  onThemeChange,
 }: Props) {
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl">
@@ -56,39 +58,7 @@ export function Header({
 
         <PasteInput onOpenStory={onOpenStory} />
 
-        <button
-          type="button"
-          onClick={onToggleTheme}
-          className="grid size-9 shrink-0 place-items-center rounded-lg border border-[color:var(--color-border)] text-[color:var(--color-fg-muted)] transition hover:bg-[color:var(--color-bg-elev)] hover:text-[color:var(--color-fg)]"
-          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-        >
-          {theme === "dark" ? (
-            <svg
-              viewBox="0 0 24 24"
-              className="size-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="12" cy="12" r="4" />
-              <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
-            </svg>
-          ) : (
-            <svg
-              viewBox="0 0 24 24"
-              className="size-4"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
-            </svg>
-          )}
-        </button>
+        <ThemeSwitcher theme={theme} onChange={onThemeChange} />
       </div>
 
       {feed !== null && (

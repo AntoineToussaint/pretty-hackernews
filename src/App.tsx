@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Feed } from "./lib/api";
+import { DEFAULT_THEME, isThemeId, THEME_IDS, type ThemeId } from "./lib/themes";
 import { Header } from "./components/Header";
 import { StoryList } from "./components/StoryList";
 import { StoryView } from "./components/StoryView";
@@ -29,17 +30,15 @@ function setHash(route: Route) {
   }
 }
 
-function getInitialTheme(): "light" | "dark" {
+function getInitialTheme(): ThemeId {
   const stored = localStorage.getItem("theme");
-  if (stored === "light" || stored === "dark") return stored;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  if (isThemeId(stored)) return stored;
+  return DEFAULT_THEME;
 }
 
 export function App() {
   const [route, setRoute] = useState<Route>(() => parseHash());
-  const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
+  const [theme, setTheme] = useState<ThemeId>(getInitialTheme);
 
   useEffect(() => {
     const onHash = () => setRoute(parseHash());
@@ -48,7 +47,9 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    const html = document.documentElement;
+    for (const id of THEME_IDS) html.classList.remove(`theme-${id}`);
+    html.classList.add(`theme-${theme}`);
     localStorage.setItem("theme", theme);
   }, [theme]);
 
@@ -59,7 +60,7 @@ export function App() {
         onFeedChange={(feed) => setHash({ kind: "list", feed })}
         onOpenStory={(id) => setHash({ kind: "story", id })}
         theme={theme}
-        onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
+        onThemeChange={setTheme}
       />
       <main className="mx-auto max-w-3xl px-4 pb-24 pt-6 sm:pt-10">
         {route.kind === "list" ? (
