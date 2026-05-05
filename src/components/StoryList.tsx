@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
-import { fetchFeed, type Feed, type StoryHit } from "../lib/api";
+import type { Feed } from "../lib/api";
+import { useFeedAutoRefresh } from "../lib/useFeedAutoRefresh";
 import { StoryCard } from "./StoryCard";
 import { StoryCardSkeleton } from "./Skeleton";
+import { LiveIndicator } from "./LiveIndicator";
 
 type Props = {
   feed: Feed;
@@ -9,26 +10,9 @@ type Props = {
 };
 
 export function StoryList({ feed, onOpenStory }: Props) {
-  const [hits, setHits] = useState<StoryHit[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const { hits, error, lastUpdated, refreshing } = useFeedAutoRefresh(feed);
 
-  useEffect(() => {
-    let cancelled = false;
-    setHits(null);
-    setError(null);
-    fetchFeed(feed)
-      .then((data) => {
-        if (!cancelled) setHits(data);
-      })
-      .catch((e: unknown) => {
-        if (!cancelled) setError(e instanceof Error ? e.message : String(e));
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [feed]);
-
-  if (error) {
+  if (error && !hits) {
     return (
       <div className="card p-6 text-sm text-[color:var(--color-fg-muted)]">
         Couldn't load stories: {error}
@@ -49,20 +33,23 @@ export function StoryList({ feed, onOpenStory }: Props) {
   }
 
   return (
-    <ul className="space-y-3">
-      {hits.map((hit, i) => (
-        <li
-          key={hit.objectID}
-          className="fade-in-up"
-          style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
-        >
-          <StoryCard
-            hit={hit}
-            rank={i + 1}
-            onOpen={() => onOpenStory(hit.objectID)}
-          />
-        </li>
-      ))}
-    </ul>
+    <>
+      <LiveIndicator lastUpdated={lastUpdated} refreshing={refreshing} />
+      <ul className="space-y-3">
+        {hits.map((hit, i) => (
+          <li
+            key={hit.objectID}
+            className="fade-in-up"
+            style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+          >
+            <StoryCard
+              hit={hit}
+              rank={i + 1}
+              onOpen={() => onOpenStory(hit.objectID)}
+            />
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

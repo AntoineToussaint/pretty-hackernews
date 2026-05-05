@@ -57,6 +57,7 @@ export function App() {
       <Header
         feed={route.kind === "list" ? route.feed : null}
         onFeedChange={(feed) => setHash({ kind: "list", feed })}
+        onOpenStory={(id) => setHash({ kind: "story", id })}
         theme={theme}
         onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
       />
