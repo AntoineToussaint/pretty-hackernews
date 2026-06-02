@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { StoryHit } from "./api";
 import { Upvote } from "./voteContext";
 import { useSeen } from "./seenContext";
@@ -31,6 +31,21 @@ export function StoryCard({ hit, rank, onOpen, selected = false }: Props) {
   const isHot = velocity >= 50;
   const [peekOpen, setPeekOpen] = useState(false);
   const canPeek = !!hit.url && isExtension();
+  const articleRef = useRef<HTMLElement>(null);
+
+  // Close the preview when clicking anywhere outside this card. composedPath
+  // pierces the shadow DOM so the check works inside the in-place reader.
+  useEffect(() => {
+    if (!peekOpen) return;
+    const onDown = (e: Event) => {
+      const path = (e.composedPath?.() ?? []) as EventTarget[];
+      if (articleRef.current && !path.includes(articleRef.current)) {
+        setPeekOpen(false);
+      }
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [peekOpen]);
   const open = () => {
     seen.markSeen(id);
     onOpen();
@@ -38,6 +53,7 @@ export function StoryCard({ hit, rank, onOpen, selected = false }: Props) {
 
   return (
     <article
+      ref={articleRef}
       className={
         "card group relative overflow-hidden p-4 transition hover:border-[color:var(--color-fg-muted)]/40 sm:p-5 " +
         (isSeen ? "opacity-[.55] " : "") +
