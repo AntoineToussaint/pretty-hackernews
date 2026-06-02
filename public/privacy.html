@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hatch — Privacy Policy</title>
+    <style>
+      body {
+        max-width: 680px;
+        margin: 0 auto;
+        padding: 48px 20px;
+        font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        color: #1a1a1a;
+        background: #fafafa;
+      }
+      h1 { font-size: 28px; }
+      h2 { font-size: 18px; margin-top: 32px; }
+      code { background: #eee; padding: 1px 5px; border-radius: 4px; }
+      .muted { color: #666; }
+    </style>
+  </head>
+  <body>
+    <h1>Hatch — Privacy Policy</h1>
+    <p class="muted">Last updated: June 2026</p>
+
+    <p>
+      Hatch is a browser extension that renders a calmer reader for
+      <a href="https://news.ycombinator.com">news.ycombinator.com</a>. It is
+      local-first and built to collect nothing.
+    </p>
+
+    <h2>What we collect</h2>
+    <p>
+      <strong>Nothing.</strong> Hatch has no servers, no analytics, no tracking,
+      and no third-party services. We do not collect, store, or transmit any
+      personal data or browsing activity.
+    </p>
+
+    <h2>Where your data lives</h2>
+    <p>
+      Your preferences — theme, read/seen stories, bookmarks, muted domains, and
+      default feed — are stored only in your browser via
+      <code>chrome.storage.local</code>. They never leave your device.
+    </p>
+
+    <h2>Network access</h2>
+    <ul>
+      <li>
+        Hatch talks to <strong>news.ycombinator.com</strong> to display the feed
+        and comments and, when you choose to, to vote or comment using your own
+        existing HN login. Your HN credentials are never seen or stored by Hatch.
+      </li>
+      <li>
+        If you enable <strong>Article previews</strong>, Hatch fetches the single
+        linked page you click “Preview” on, in order to show its text inline.
+        Nothing is fetched unless you click Preview, and the result is not stored
+        or sent anywhere.
+      </li>
+    </ul>
+
+    <h2>Permissions</h2>
+    <ul>
+      <li><strong>news.ycombinator.com access</strong> — to render the reader and act on your behalf when you vote/comment.</li>
+      <li><strong>storage</strong> — to save your preferences locally.</li>
+      <li><strong>declarativeNetRequest</strong> — to relax HN's content-security-policy on HN's own pages so site icons, fonts, and preview images can load. No requests are blocked or redirected.</li>
+      <li><strong>Broad site access (optional)</strong> — requested only if you turn on Article previews; used solely to fetch a page you click Preview on.</li>
+    </ul>
+
+    <h2>Contact</h2>
+    <p>Questions? Open an issue on the project's repository.</p>
+    <p class="muted">Not affiliated with Y Combinator.</p>
+  </body>
+</html>

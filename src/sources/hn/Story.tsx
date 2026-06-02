@@ -1,24 +1,36 @@
 import { useEffect, useState } from "react";
-import { fetchStory, type CommentNode, type StoryItem } from "../lib/api";
-import { faviconUrl, hostname, timeAgo } from "../lib/format";
+import type { ItemViewProps } from "../types";
+import { fetchStory, type CommentNode, type StoryItem } from "./api";
+import { Upvote } from "./voteContext";
+import { getCommentForm } from "./auth";
+import { faviconUrl, hostname, timeAgo } from "../../lib/format";
 import { Comment } from "./Comment";
+import { CommentBox } from "./CommentBox";
 import { StoryViewSkeleton } from "./Skeleton";
 
-type Props = {
-  id: string;
-  onBack: () => void;
-};
-
-export function StoryView({ id, onBack }: Props) {
+// Vote context is provided by the caller (the in-place content script wraps the
+// whole reader in a VoteProvider populated from HN's DOM). With no provider —
+// e.g. the standalone web app — <Upvote> simply renders nothing.
+export function Story({ itemId, onBack }: ItemViewProps) {
   const [story, setStory] = useState<StoryItem | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [collapseNonce, setCollapseNonce] = useState(0);
+  const [allCollapsed, setAllCollapsed] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const toggleCollapseAll = () => {
+    setAllCollapsed((v) => !v);
+    setCollapseNonce((n) => n + 1);
+  };
 
   useEffect(() => {
     let cancelled = false;
     setStory(null);
     setError(null);
+    setCollapseNonce(0);
+    setAllCollapsed(false);
     window.scrollTo({ top: 0, behavior: "instant" });
-    fetchStory(id)
+    fetchStory(itemId)
       .then((data) => {
         if (!cancelled) setStory(data);
       })
@@ -28,44 +40,60 @@ export function StoryView({ id, onBack }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [itemId, reloadKey]);
 
   return (
     <div className="space-y-6">
-      <button
-        type="button"
-        onClick={onBack}
-        className="inline-flex items-center gap-1.5 text-sm text-[color:var(--color-fg-muted)] transition hover:text-[color:var(--color-fg)]"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          className="size-4"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+        <button
+          type="button"
+          onClick={onBack}
+          className="inline-flex items-center gap-1.5 text-sm text-[color:var(--color-fg-muted)] transition hover:text-[color:var(--color-fg)]"
         >
-          <path d="M19 12H5M12 19l-7-7 7-7" />
-        </svg>
-        Back
-      </button>
+          <svg
+            viewBox="0 0 24 24"
+            className="size-4"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M19 12H5M12 19l-7-7 7-7" />
+          </svg>
+          Back
+        </button>
 
-      {error && (
-        <div className="card p-6 text-sm text-[color:var(--color-fg-muted)]">
-          Couldn't load story: {error}
-        </div>
-      )}
+        {error && (
+          <div className="card p-6 text-sm text-[color:var(--color-fg-muted)]">
+            Couldn't load story: {error}
+          </div>
+        )}
 
-      {!story && !error && <StoryViewSkeleton />}
+        {!story && !error && <StoryViewSkeleton />}
 
-      {story && (
-        <>
-          <StoryHeader story={story} />
-          <div>
-            <h3 className="mb-3 px-1 text-xs font-medium uppercase tracking-wider text-[color:var(--color-fg-muted)]">
-              {countComments(story)} comments
-            </h3>
+        {story && (
+          <>
+            <StoryHeader story={story} />
+            <CommentBox
+              parentId={String(story.id)}
+              getForm={() => getCommentForm(String(story.id))}
+              onPosted={() => setReloadKey((k) => k + 1)}
+            />
+            <div>
+            <div className="mb-3 flex items-center justify-between px-1">
+              <h3 className="text-xs font-medium uppercase tracking-wider text-[color:var(--color-fg-muted)]">
+                {countComments(story)} comments
+              </h3>
+              {story.children.length > 0 && (
+                <button
+                  type="button"
+                  onClick={toggleCollapseAll}
+                  className="text-xs font-medium text-[color:var(--color-fg-muted)] transition hover:text-[color:var(--color-accent)]"
+                >
+                  {allCollapsed ? "Expand all" : "Collapse all"}
+                </button>
+              )}
+            </div>
             {story.children.length === 0 ? (
               <div className="card p-6 text-center text-sm text-[color:var(--color-fg-muted)]">
                 No comments yet.
@@ -78,7 +106,14 @@ export function StoryView({ id, onBack }: Props) {
                     className="fade-in-up"
                     style={{ animationDelay: `${Math.min(i * 30, 240)}ms` }}
                   >
-                    <Comment node={c} depth={0} />
+                    <Comment
+                      node={c}
+                      depth={0}
+                      op={story.author}
+                      collapseSignal={collapseNonce}
+                      collapseTo={allCollapsed}
+                      onReplyPosted={() => setReloadKey((k) => k + 1)}
+                    />
                   </li>
                 ))}
               </ul>
@@ -128,6 +163,7 @@ function StoryHeader({ story }: { story: StoryItem }) {
               </a>
             )}
             <span className="inline-flex items-center gap-1">
+              <Upvote id={story.id} />
               <span className="accent-text font-mono tabular-nums">
                 {story.points ?? 0}
               </span>{" "}

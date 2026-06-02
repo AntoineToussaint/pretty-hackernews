@@ -5,14 +5,30 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview"
+    "build": "tsc -p tsconfig.app.json && vite build",
+    "preview": "vite preview",
+    "css": "tailwindcss -i src/index.css -o src/compiled.css",
+    "css:watch": "tailwindcss -i src/index.css -o src/compiled.css --watch",
+    "plasmo:dev": "bun run css && plasmo dev",
+    "plasmo:build": "bun run css && plasmo build",
+    "plasmo:zip": "bun run css && plasmo build --zip"
+  },
+  "displayName": "Hatch — a calmer Hacker News",
+  "manifest": {
+    "host_permissions": ["https://news.ycombinator.com/*"],
+    "optional_host_permissions": ["*://*/*"],
+    "permissions": ["storage", "declarativeNetRequest"]
   },
   "dependencies": {
+    "@mozilla/readability": "^0.6.0",
+    "dompurify": "^3.4.7",
+    "plasmo": "^0.90.5",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },
   "devDependencies": {
+    "@tailwindcss/cli": "^4.3.0",
+    "@tailwindcss/postcss": "^4.3.0",
     "@tailwindcss/vite": "^4.1.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",

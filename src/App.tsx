@@ -1,33 +1,46 @@
 import { useEffect, useState } from "react";
-import type { Feed } from "./lib/api";
 import { DEFAULT_THEME, isThemeId, THEME_IDS, type ThemeId } from "./lib/themes";
+import { DEFAULT_SOURCE_ID, SOURCES, getSource } from "./sources/registry";
 import { Header } from "./components/Header";
-import { StoryList } from "./components/StoryList";
-import { StoryView } from "./components/StoryView";
+import { Settings } from "./components/Settings";
 
 type Route =
-  | { kind: "list"; feed: Feed }
-  | { kind: "story"; id: string };
+  | { kind: "list"; sourceId: string; feedId: string }
+  | { kind: "item"; sourceId: string; itemId: string }
+  | { kind: "settings" };
 
 function parseHash(): Route {
   const h = window.location.hash.replace(/^#\/?/, "");
   const parts = h.split("/").filter(Boolean);
-  if (parts[0] === "story" && parts[1]) {
-    return { kind: "story", id: parts[1] };
+
+  if (parts[0] === "settings") return { kind: "settings" };
+
+  // First segment selects the source when it names a known one; otherwise we
+  // fall back to the default source and treat the whole hash as a feed/item
+  // path (keeps older "#/top" and "#/story/123" links working).
+  let sourceId = DEFAULT_SOURCE_ID;
+  let rest = parts;
+  if (parts[0] && SOURCES.some((s) => s.id === parts[0])) {
+    sourceId = parts[0];
+    rest = parts.slice(1);
   }
-  const feeds: Feed[] = ["top", "new", "best", "ask", "show", "jobs"];
-  const feed = (feeds as string[]).includes(parts[0])
-    ? (parts[0] as Feed)
-    : "top";
-  return { kind: "list", feed };
+  const source = getSource(sourceId);
+
+  if ((rest[0] === "item" || rest[0] === "story") && rest[1]) {
+    return { kind: "item", sourceId, itemId: rest[1] };
+  }
+  const feedId = source.feeds.some((f) => f.id === rest[0])
+    ? rest[0]
+    : source.defaultFeed;
+  return { kind: "list", sourceId, feedId };
 }
 
-function setHash(route: Route) {
-  const target =
-    route.kind === "story" ? `#/story/${route.id}` : `#/${route.feed}`;
-  if (window.location.hash !== target) {
-    window.location.hash = target;
-  }
+const listHash = (sourceId: string, feedId: string) => `#/${sourceId}/${feedId}`;
+const itemHash = (sourceId: string, itemId: string) =>
+  `#/${sourceId}/item/${itemId}`;
+
+function setHash(target: string) {
+  if (window.location.hash !== target) window.location.hash = target;
 }
 
 function getInitialTheme(): ThemeId {
@@ -53,25 +66,40 @@ export function App() {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
+  const source = getSource(route.kind === "settings" ? DEFAULT_SOURCE_ID : route.sourceId);
+  const { FeedView, ItemView } = source;
+
   return (
     <div className="min-h-screen">
       <Header
-        feed={route.kind === "list" ? route.feed : null}
-        onFeedChange={(feed) => setHash({ kind: "list", feed })}
-        onOpenStory={(id) => setHash({ kind: "story", id })}
+        sources={SOURCES}
+        activeSource={source}
+        onSourceChange={(id) => {
+          const next = getSource(id);
+          setHash(listHash(next.id, next.defaultFeed));
+        }}
+        feedId={route.kind === "list" ? route.feedId : null}
+        onFeedChange={(feedId) => setHash(listHash(source.id, feedId))}
+        onOpenItem={(id) => setHash(itemHash(source.id, id))}
         theme={theme}
         onThemeChange={setTheme}
       />
       <main className="mx-auto max-w-3xl px-4 pb-24 pt-6 sm:pt-10">
-        {route.kind === "list" ? (
-          <StoryList
-            feed={route.feed}
-            onOpenStory={(id) => setHash({ kind: "story", id: String(id) })}
+        {route.kind === "settings" ? (
+          <Settings
+            theme={theme}
+            onThemeChange={setTheme}
+            onBack={() => setHash(listHash(source.id, source.defaultFeed))}
+          />
+        ) : route.kind === "list" ? (
+          <FeedView
+            feedId={route.feedId}
+            onOpenItem={(id) => setHash(itemHash(source.id, id))}
           />
         ) : (
-          <StoryView
-            id={route.id}
-            onBack={() => setHash({ kind: "list", feed: "top" })}
+          <ItemView
+            itemId={route.itemId}
+            onBack={() => setHash(listHash(source.id, source.defaultFeed))}
           />
         )}
       </main>

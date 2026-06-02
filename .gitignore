@@ -1,5 +1,6 @@
 node_modules
 dist
+dist-ext
 dist-ssr
 *.local
 *.tsbuildinfo
@@ -28,3 +29,8 @@ lerna-debug.log*
 # Bun
 .bun
 bun.lockb
+
+# Plasmo
+.plasmo
+build/
+src/compiled.css

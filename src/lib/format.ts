@@ -29,14 +29,3 @@ export function faviconUrl(url: string | null, size = 64): string | null {
   if (!host) return null;
   return `https://www.google.com/s2/favicons?domain=${host}&sz=${size}`;
 }
-
-export function parseHnId(input: string): string | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-  if (/^\d+$/.test(trimmed)) return trimmed;
-  const idMatch = trimmed.match(/[?&]id=(\d+)/);
-  if (idMatch) return idMatch[1];
-  const storyMatch = trimmed.match(/\/story\/(\d+)/);
-  if (storyMatch) return storyMatch[1];
-  return null;
-}

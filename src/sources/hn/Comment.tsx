@@ -1,6 +1,10 @@
-import { useState } from "react";
-import type { CommentNode } from "../lib/api";
-import { timeAgo } from "../lib/format";
+import { useEffect, useState } from "react";
+import type { CommentNode } from "./api";
+import { Upvote } from "./voteContext";
+import { CommentBox } from "./CommentBox";
+import { getReplyForm } from "./auth";
+import { isExtension } from "../../lib/runtime";
+import { timeAgo } from "../../lib/format";
 
 const DEPTH_HUES = [
   "#ff5c1a",
@@ -14,13 +18,34 @@ const DEPTH_HUES = [
 type Props = {
   node: CommentNode;
   depth: number;
+  /** The story's author, so we can badge their comments as OP. */
+  op?: string | null;
+  /** Bumped by "collapse all / expand all"; applies collapseTo when it changes. */
+  collapseSignal?: number;
+  collapseTo?: boolean;
+  /** Called after a reply posts, so the story can reload the thread. */
+  onReplyPosted?: () => void;
 };
 
-export function Comment({ node, depth }: Props) {
+export function Comment({
+  node,
+  depth,
+  op,
+  collapseSignal,
+  collapseTo,
+  onReplyPosted,
+}: Props) {
   const [collapsed, setCollapsed] = useState(false);
+  const [replying, setReplying] = useState(false);
   const hue = DEPTH_HUES[depth % DEPTH_HUES.length];
   const isDeleted = !node.author && !node.text;
   const replyCount = countDescendants(node);
+  const isOp = !!op && node.author === op;
+
+  // Respond to a collapse-all / expand-all signal from the story view.
+  useEffect(() => {
+    if (collapseSignal && collapseSignal > 0) setCollapsed(!!collapseTo);
+  }, [collapseSignal]);
 
   return (
     <div
@@ -44,8 +69,23 @@ export function Comment({ node, depth }: Props) {
         <span className="font-medium text-[color:var(--color-fg)]">
           {node.author ?? "[deleted]"}
         </span>
+        {isOp && (
+          <span className="accent-bg rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase leading-none tracking-wide text-white">
+            OP
+          </span>
+        )}
         <span>·</span>
         <span>{timeAgo(node.created_at_i)}</span>
+        <Upvote id={node.id} />
+        {!collapsed && !isDeleted && isExtension() && (
+          <button
+            type="button"
+            onClick={() => setReplying((v) => !v)}
+            className="font-medium text-[color:var(--color-fg-muted)] transition hover:text-[color:var(--color-accent)]"
+          >
+            {replying ? "cancel" : "reply"}
+          </button>
+        )}
         {collapsed && replyCount > 0 && (
           <>
             <span>·</span>
@@ -69,13 +109,34 @@ export function Comment({ node, depth }: Props) {
             />
           )}
 
+          {replying && (
+            <div className="mt-3">
+              <CommentBox
+                parentId={String(node.id)}
+                getForm={() => getReplyForm(node.id)}
+                onPosted={() => {
+                  setReplying(false);
+                  onReplyPosted?.();
+                }}
+                autoFocus
+                placeholder="Reply…"
+              />
+            </div>
+          )}
+
           {node.children.length > 0 && (
             <div
               className="mt-3 space-y-2 border-l-2 pl-3 sm:pl-4"
               style={{ borderColor: `${hue}55` }}
             >
               {node.children.map((c) => (
-                <Comment key={c.id} node={c} depth={depth + 1} />
+                <Comment
+                  key={c.id}
+                  node={c}
+                  depth={depth + 1}
+                  op={op}
+                  onReplyPosted={onReplyPosted}
+                />
               ))}
             </div>
           )}
