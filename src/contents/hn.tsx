@@ -223,6 +223,9 @@ export default function HNReader() {
           feeds={hnSource.feeds}
           defaultFeed={defaultFeed}
           onDefaultFeedChange={changeDefaultFeed}
+          onOpenAISettings={() =>
+            chrome.runtime.sendMessage({ type: "hatch-open-options" })
+          }
         />
       )}
       <main className="mx-auto max-w-3xl px-4 pb-24 pt-6 sm:pt-10">

@@ -5,17 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "test": "bun test",
     "build": "tsc -p tsconfig.app.json && vite build",
     "preview": "vite preview",
     "css": "tailwindcss -i src/index.css -o src/compiled.css",
     "css:watch": "tailwindcss -i src/index.css -o src/compiled.css --watch",
-    "plasmo:dev": "bun run css && plasmo dev",
+    "plasmo:dev": "bun run css && (bun run css:watch &) && plasmo dev",
     "plasmo:build": "bun run css && plasmo build",
     "plasmo:zip": "bun run css && plasmo build --zip"
   },
   "displayName": "Hatch — a calmer Hacker News",
   "manifest": {
-    "host_permissions": ["https://news.ycombinator.com/*"],
+    "host_permissions": [
+      "https://news.ycombinator.com/*",
+      "https://api.anthropic.com/*",
+      "https://api.openai.com/*"
+    ],
     "optional_host_permissions": ["*://*/*"],
     "permissions": ["storage", "declarativeNetRequest"]
   },

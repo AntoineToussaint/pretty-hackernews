@@ -1,103 +1,57 @@
+import "./compiled.css";
 import { useEffect, useState } from "react";
 
-// Self-contained inline styles (the popup is a separate page; no Tailwind here).
 const ORIGINS = ["*://*/*"];
-
-const colors = {
-  bg: "#0a0a0c",
-  elev: "#161619",
-  border: "rgba(255,255,255,.1)",
-  fg: "#ececf1",
-  muted: "#8e8e99",
-  accent: "#ff5c1a",
-  accent2: "#ff2d8a",
-};
 
 export default function Popup() {
   const [enabled, setEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
     chrome.permissions.contains({ origins: ORIGINS }, (g) => setEnabled(g));
+    chrome.storage.local.get("theme", (r) =>
+      document.documentElement.classList.add(
+        `theme-${typeof r.theme === "string" ? r.theme : "classic"}`,
+      ),
+    );
   }, []);
 
   const toggle = () => {
     if (enabled) {
-      chrome.permissions.remove({ origins: ORIGINS }, (ok) => {
-        if (ok) setEnabled(false);
-      });
+      chrome.permissions.remove({ origins: ORIGINS }, (ok) => ok && setEnabled(false));
     } else {
-      // Must run in this gesture — popup is an extension page, so this works.
-      chrome.permissions.request({ origins: ORIGINS }, (ok) => {
-        if (ok) setEnabled(true);
-      });
+      chrome.permissions.request({ origins: ORIGINS }, (ok) => ok && setEnabled(true));
     }
   };
 
   return (
-    <div
-      style={{
-        width: 300,
-        padding: 16,
-        background: colors.bg,
-        color: colors.fg,
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-        WebkitFontSmoothing: "antialiased",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span
-          style={{
-            display: "grid",
-            placeItems: "center",
-            width: 28,
-            height: 28,
-            borderRadius: 9,
-            background: `linear-gradient(135deg, ${colors.accent}, ${colors.accent2})`,
-            color: "#fff",
-            fontWeight: 800,
-          }}
-        >
+    <div className="w-[300px] p-4 text-[color:var(--color-fg)]">
+      <div className="flex items-center gap-2.5">
+        <span className="accent-bg grid size-7 place-items-center rounded-[9px] font-extrabold text-white">
           H
         </span>
-        <div style={{ fontWeight: 700, fontSize: 15 }}>Hatch</div>
+        <span className="text-[15px] font-bold tracking-tight">Hatch</span>
       </div>
-      <p style={{ margin: "8px 0 14px", fontSize: 12.5, color: colors.muted }}>
+      <p className="mb-3.5 mt-2 text-xs text-[color:var(--color-fg-muted)]">
         A calmer Hacker News, rendered in place. Open news.ycombinator.com to use
         it.
       </p>
 
-      <div
-        style={{
-          background: colors.elev,
-          border: `1px solid ${colors.border}`,
-          borderRadius: 14,
-          padding: 12,
-        }}
-      >
-        <div style={{ fontSize: 13, fontWeight: 600 }}>Article previews</div>
-        <p style={{ margin: "6px 0 10px", fontSize: 12, color: colors.muted }}>
-          Lets the reader fetch a linked page to show a clean inline preview.
-          Off by default; a page is only fetched when you click “Preview”.
+      <div className="card p-3">
+        <div className="text-[13px] font-semibold">Article previews</div>
+        <p className="my-1.5 text-xs text-[color:var(--color-fg-muted)]">
+          Lets the reader fetch a linked page to show a clean inline preview. Off
+          by default; a page is only fetched when you click “Preview”.
         </p>
         <button
           type="button"
           onClick={toggle}
           disabled={enabled === null}
-          style={{
-            width: "100%",
-            border: 0,
-            borderRadius: 999,
-            padding: "9px 0",
-            fontSize: 13,
-            fontWeight: 600,
-            cursor: "pointer",
-            color: enabled ? colors.fg : "#fff",
-            background: enabled
-              ? "transparent"
-              : `linear-gradient(135deg, ${colors.accent}, ${colors.accent2})`,
-            boxShadow: enabled ? `inset 0 0 0 1px ${colors.border}` : "none",
-          }}
+          className={
+            "w-full rounded-full py-2 text-[13px] font-semibold transition disabled:opacity-50 " +
+            (enabled
+              ? "ring-1 ring-[color:var(--color-border)] text-[color:var(--color-fg)]"
+              : "accent-bg text-white")
+          }
         >
           {enabled === null
             ? "…"
@@ -106,6 +60,16 @@ export default function Popup() {
               : "Enable article previews"}
         </button>
       </div>
+
+      <button
+        type="button"
+        onClick={() =>
+          chrome.tabs.create({ url: chrome.runtime.getURL("options.html") })
+        }
+        className="mt-2.5 w-full rounded-xl py-2 text-[13px] font-semibold text-[color:var(--color-fg)] ring-1 ring-[color:var(--color-border)] transition hover:bg-[color:var(--color-bg-elev)]"
+      >
+        ✨ AI &amp; profile settings
+      </button>
     </div>
   );
 }

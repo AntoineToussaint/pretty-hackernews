@@ -6,6 +6,7 @@ import { getCommentForm } from "./auth";
 import { faviconUrl, hostname, timeAgo } from "../../lib/format";
 import { Comment } from "./Comment";
 import { CommentBox } from "./CommentBox";
+import { Digest } from "./Digest";
 import { StoryViewSkeleton } from "./Skeleton";
 
 // Vote context is provided by the caller (the in-place content script wraps the
@@ -74,6 +75,7 @@ export function Story({ itemId, onBack }: ItemViewProps) {
         {story && (
           <>
             <StoryHeader story={story} />
+            <Digest story={story} />
             <CommentBox
               parentId={String(story.id)}
               getForm={() => getCommentForm(String(story.id))}

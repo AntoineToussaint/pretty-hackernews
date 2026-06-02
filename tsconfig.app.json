@@ -23,6 +23,7 @@
     "src/contents",
     "src/background.ts",
     "src/popup.tsx",
+    "src/options.tsx",
     "src/compiled.css"
   ]
 }

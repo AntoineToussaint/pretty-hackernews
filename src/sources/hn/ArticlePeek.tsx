@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { hasPreviewPermission, loadArticle, type Article } from "./article";
 
 type State =
@@ -10,11 +10,35 @@ type State =
 export function ArticlePeek({ url }: { url: string }) {
   const [state, setState] = useState<State>({ status: "loading" });
   const [full, setFull] = useState(false);
+  const [imgOk, setImgOk] = useState(true);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // Recover lazy-loaded images and hide ones that fail — many sites use
+  // data-src placeholders or block hotlinking, which otherwise leaves
+  // broken-image boxes. Runs whenever the article content is rendered.
+  useEffect(() => {
+    const el = contentRef.current;
+    if (!el) return;
+    el.querySelectorAll("img").forEach((img) => {
+      const lazy =
+        img.getAttribute("data-src") ||
+        img.getAttribute("data-original") ||
+        img.getAttribute("data-lazy-src");
+      const src = img.getAttribute("src");
+      if (lazy && (!src || src.startsWith("data:"))) img.src = lazy;
+      const hide = () => {
+        img.style.display = "none";
+      };
+      if (img.complete && img.naturalWidth === 0) hide();
+      img.addEventListener("error", hide, { once: true });
+    });
+  }, [full, state]);
 
   useEffect(() => {
     let cancelled = false;
     setState({ status: "loading" });
     setFull(false);
+    setImgOk(true);
     hasPreviewPermission().then((granted) => {
       if (cancelled) return;
       if (!granted) {
@@ -75,26 +99,23 @@ export function ArticlePeek({ url }: { url: string }) {
   const { article } = state;
   return (
     <div className="mt-3 border-t border-[color:var(--color-border)] pt-3">
-      {article.image && (
+      {article.image && imgOk && (
         <img
           src={article.image}
           alt=""
           loading="lazy"
-          className="mb-3 max-h-64 w-full rounded-lg object-cover"
+          onError={() => setImgOk(false)}
+          className="mb-3 h-44 w-full rounded-lg object-cover"
         />
       )}
-      {full ? (
-        <div
-          className="comment-body text-[14.5px] leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: article.html }}
-        />
-      ) : (
-        article.excerpt && (
-          <p className="text-[14.5px] leading-relaxed text-[color:var(--color-fg)]">
-            {article.excerpt}
-          </p>
-        )
-      )}
+      <div
+        ref={contentRef}
+        className={
+          "comment-body text-[14.5px] leading-relaxed [&_img]:my-2 [&_img]:rounded-lg [&_img]:max-h-80 [&_img]:w-auto " +
+          (full ? "" : "max-h-80 overflow-y-auto pr-1")
+        }
+        dangerouslySetInnerHTML={{ __html: article.html }}
+      />
       <div className="mt-3 flex items-center gap-4 text-xs font-medium">
         <button
           type="button"

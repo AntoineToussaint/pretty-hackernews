@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { THEMES, type ThemeId } from "../lib/themes";
 import { usePrefs } from "../sources/hn/prefsContext";
 
@@ -9,6 +10,7 @@ type Props = {
   feeds?: { id: string; label: string }[];
   defaultFeed?: string;
   onDefaultFeedChange?: (id: string) => void;
+  onOpenAISettings?: () => void;
 };
 
 /** Lightweight settings popover anchored to the header gear. */
@@ -19,8 +21,11 @@ export function SettingsPopover({
   feeds,
   defaultFeed,
   onDefaultFeedChange,
+  onOpenAISettings,
 }: Props) {
   const prefs = usePrefs();
+  const [themeOpen, setThemeOpen] = useState(false);
+  const current = THEMES.find((t) => t.id === theme) ?? THEMES[0];
   return (
     <>
       {/* click-away backdrop */}
@@ -33,47 +38,82 @@ export function SettingsPopover({
         <div className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wider text-[color:var(--color-fg-muted)]">
           Theme
         </div>
-        <div className="space-y-0.5">
-          {THEMES.map((t) => {
-            const active = t.id === theme;
-            return (
-              <button
-                key={t.id}
-                type="button"
-                onClick={() => onThemeChange(t.id)}
-                aria-pressed={active}
-                className={
-                  "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition " +
-                  (active
-                    ? "bg-[color:var(--color-bg-elev)] ring-1 ring-[color:var(--color-accent)]"
-                    : "hover:bg-[color:var(--color-bg-elev)]")
-                }
-              >
-                <span
-                  className="size-5 shrink-0 rounded-md ring-1 ring-[color:var(--color-border)]"
-                  style={{
-                    background: `linear-gradient(135deg, ${t.swatch[0]}, ${t.swatch[1]})`,
+        {/* collapsed trigger — keeps the popover short with many themes */}
+        <button
+          type="button"
+          onClick={() => setThemeOpen((o) => !o)}
+          aria-expanded={themeOpen}
+          className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm ring-1 ring-[color:var(--color-border)] transition hover:bg-[color:var(--color-bg-elev)]"
+        >
+          <span
+            className="size-5 shrink-0 rounded-md ring-1 ring-[color:var(--color-border)]"
+            style={{
+              background: `linear-gradient(135deg, ${current.swatch[0]}, ${current.swatch[1]})`,
+            }}
+          />
+          <span className="flex-1 font-medium">{current.name}</span>
+          <svg
+            viewBox="0 0 24 24"
+            className={
+              "size-4 text-[color:var(--color-fg-muted)] transition " +
+              (themeOpen ? "rotate-180" : "")
+            }
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        {themeOpen && (
+          <div className="mt-1 max-h-56 space-y-0.5 overflow-y-auto pr-0.5">
+            {THEMES.map((t) => {
+              const active = t.id === theme;
+              return (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => {
+                    onThemeChange(t.id);
+                    setThemeOpen(false);
                   }}
-                />
-                <span className="flex-1 font-medium">{t.name}</span>
-                {active && (
-                  <svg
-                    viewBox="0 0 24 24"
-                    className="size-4 text-[color:var(--color-accent)]"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M20 6L9 17l-5-5" />
-                  </svg>
-                )}
-              </button>
-            );
-          })}
-        </div>
+                  aria-pressed={active}
+                  className={
+                    "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition " +
+                    (active
+                      ? "bg-[color:var(--color-bg-elev)] ring-1 ring-[color:var(--color-accent)]"
+                      : "hover:bg-[color:var(--color-bg-elev)]")
+                  }
+                >
+                  <span
+                    className="size-5 shrink-0 rounded-md ring-1 ring-[color:var(--color-border)]"
+                    style={{
+                      background: `linear-gradient(135deg, ${t.swatch[0]}, ${t.swatch[1]})`,
+                    }}
+                  />
+                  <span className="flex-1 font-medium">{t.name}</span>
+                  {active && (
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="size-4 text-[color:var(--color-accent)]"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden="true"
+                    >
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {feeds && onDefaultFeedChange && (
           <div className="mt-3 border-t border-[color:var(--color-border)] pt-3">
@@ -124,6 +164,16 @@ export function SettingsPopover({
               ))}
             </div>
           </div>
+        )}
+
+        {onOpenAISettings && (
+          <button
+            type="button"
+            onClick={onOpenAISettings}
+            className="mt-3 w-full rounded-lg border border-[color:var(--color-border)] py-2 text-sm font-medium text-[color:var(--color-fg)] transition hover:bg-[color:var(--color-bg-elev)]"
+          >
+            ✨ AI &amp; profile settings
+          </button>
         )}
       </div>
     </>

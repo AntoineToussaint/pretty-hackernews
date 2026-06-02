@@ -1,3 +1,5 @@
+import { complete, type Provider } from "./lib/llm";
+
 // Strips HN's Content-Security-Policy on its own pages so our in-place reader
 // can load external images (favicons, article hero images) and the Inter web
 // font — all of which HN's `img-src 'self'` / `style-src 'self'` would block.
@@ -48,6 +50,41 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     chrome.permissions.contains({ origins: PREVIEW_ORIGINS }, (granted) =>
       sendResponse({ granted }),
     );
+    return true;
+  }
+
+  // Open the options page as a full tab (not the cramped embedded pane).
+  if (msg?.type === "hatch-open-options") {
+    chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
+    return;
+  }
+
+  // Is the AI configured? (key kept in the background; not exposed to content.)
+  if (msg?.type === "hatch-ai-status") {
+    chrome.storage.local.get(["aiKey"], (r) =>
+      sendResponse({ configured: !!r.aiKey }),
+    );
+    return true;
+  }
+
+  // Run an LLM completion using the stored config. The key stays here.
+  if (msg?.type === "hatch-llm") {
+    chrome.storage.local.get(["aiProvider", "aiKey", "aiModel"], (r) => {
+      if (!r.aiKey) {
+        sendResponse({ ok: false, error: "not-configured" });
+        return;
+      }
+      complete(
+        {
+          provider: (r.aiProvider as Provider) || "claude",
+          apiKey: r.aiKey as string,
+          model: (r.aiModel as string) || "",
+        },
+        msg.system,
+        msg.user,
+        msg.maxTokens || 1024,
+      ).then(sendResponse);
+    });
     return true;
   }
 });

@@ -28,6 +28,63 @@
     0 8px 24px -8px rgba(0, 0, 0, 0.6);
 }
 
+/* Classic — faithful to the original HN: flat, dense, black-on-cream */
+.theme-classic {
+  color-scheme: light;
+  --color-bg: #f6f6ef;
+  --color-bg-elev: #f6f6ef; /* flat — cards blend into the page like real HN */
+  --color-fg: #000000;
+  --color-fg-muted: #828282; /* HN's exact meta gray */
+  --color-border: rgba(0, 0, 0, 0.06);
+  --color-accent: #ff6600; /* the HN orange */
+  --color-accent-2: #ff6600;
+  --shadow-card: none;
+  /* HN literally uses Verdana — peak authenticity */
+  font-family: Verdana, Geneva, Tahoma, sans-serif !important;
+}
+/* Dense, tight layout to match the original HN — packed, minimal gaps */
+.theme-classic .card {
+  border-color: transparent !important;
+  border-radius: 4px;
+  padding: 0.22rem 0.45rem !important;
+}
+.theme-classic .space-y-3 > * + * {
+  margin-top: 0.12rem !important;
+}
+.theme-classic main {
+  padding-top: 0.5rem !important;
+}
+.theme-classic h2 {
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+}
+/* tighten the row internals: smaller favicon, tighter columns */
+.theme-classic .gap-4 {
+  gap: 0.5rem !important;
+}
+.theme-classic .size-10 {
+  width: 1.35rem !important;
+  height: 1.35rem !important;
+}
+.theme-classic .mt-2 {
+  margin-top: 0.1rem !important;
+}
+
+/* Classic Modern — the HN palette, modernized: lifted cards, softer text */
+.theme-classic-modern {
+  color-scheme: light;
+  --color-bg: #f6f6ef;
+  --color-bg-elev: #fffefb;
+  --color-fg: #1d1b16;
+  --color-fg-muted: #6f6f66;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-accent: #ff6600;
+  --color-accent-2: #ff9233;
+  --shadow-card:
+    0 1px 1px rgba(0, 0, 0, 0.02),
+    0 4px 12px -2px rgba(0, 0, 0, 0.06);
+}
+
 /* Mist — cool dark */
 .theme-mist {
   color-scheme: dark;
@@ -71,6 +128,8 @@
   --shadow-card:
     0 1px 1px rgba(0, 0, 0, 0.02),
     0 4px 12px -2px rgba(0, 0, 0, 0.05);
+  /* editorial serif for the "paper" reading feel */
+  font-family: Georgia, "Times New Roman", serif !important;
 }
 
 /* Mono — true grayscale dark */
@@ -86,6 +145,92 @@
   --shadow-card:
     0 1px 0 rgba(255, 255, 255, 0.03) inset,
     0 8px 24px -8px rgba(0, 0, 0, 0.7);
+}
+
+/* ---- "known" themes, for fun ---- */
+
+/* Bloomberg — monochromatic amber-orange on black, financial-terminal ugly */
+.theme-bloomberg {
+  color-scheme: dark;
+  --color-bg: #000000;
+  --color-bg-elev: #0a0a0a;
+  --color-fg: #ffa733; /* amber data text */
+  --color-fg-muted: #a86a1f; /* dim amber */
+  --color-border: rgba(255, 140, 40, 0.2);
+  --color-accent: #ff7a00; /* punchy Bloomberg orange */
+  --color-accent-2: #ffb86b;
+  --shadow-card: none;
+}
+
+/* Matrix — green phosphor terminal */
+.theme-matrix {
+  color-scheme: dark;
+  --color-bg: #000400;
+  --color-bg-elev: #00140a;
+  --color-fg: #33ff66;
+  --color-fg-muted: #1f9c45;
+  --color-border: rgba(51, 255, 102, 0.18);
+  --color-accent: #39ff14;
+  --color-accent-2: #00ff41;
+  --shadow-card: none;
+}
+
+/* Bloomberg + Matrix render in monospace (overrides the inline font) */
+.theme-bloomberg,
+.theme-matrix {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+}
+
+/* Dracula */
+.theme-dracula {
+  color-scheme: dark;
+  --color-bg: #282a36;
+  --color-bg-elev: #343746;
+  --color-fg: #f8f8f2;
+  --color-fg-muted: #6272a4;
+  --color-border: rgba(248, 248, 242, 0.1);
+  --color-accent: #bd93f9;
+  --color-accent-2: #ff79c6;
+  --shadow-card: 0 8px 24px -10px rgba(0, 0, 0, 0.6);
+}
+
+/* Nord */
+.theme-nord {
+  color-scheme: dark;
+  --color-bg: #2e3440;
+  --color-bg-elev: #3b4252;
+  --color-fg: #eceff4;
+  --color-fg-muted: #828a9c;
+  --color-border: rgba(236, 239, 244, 0.1);
+  --color-accent: #88c0d0;
+  --color-accent-2: #5e81ac;
+  --shadow-card: 0 8px 24px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Gruvbox — retro warm dark */
+.theme-gruvbox {
+  color-scheme: dark;
+  --color-bg: #282828;
+  --color-bg-elev: #32302f;
+  --color-fg: #ebdbb2;
+  --color-fg-muted: #a89984;
+  --color-border: rgba(235, 219, 178, 0.12);
+  --color-accent: #fe8019;
+  --color-accent-2: #d79921;
+  --shadow-card: 0 8px 24px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* Solarized Dark */
+.theme-solarized {
+  color-scheme: dark;
+  --color-bg: #002b36;
+  --color-bg-elev: #073642;
+  --color-fg: #93a1a1;
+  --color-fg-muted: #586e75;
+  --color-border: rgba(147, 161, 161, 0.14);
+  --color-accent: #268bd2;
+  --color-accent-2: #2aa198;
+  --shadow-card: 0 8px 24px -10px rgba(0, 0, 0, 0.5);
 }
 
 @layer base {

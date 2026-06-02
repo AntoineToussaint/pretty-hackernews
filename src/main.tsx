@@ -8,7 +8,21 @@ import { App } from "./App.tsx";
 // the bundle instead. index.html ships with theme-hatch as the default.
 try {
   const saved = localStorage.getItem("theme");
-  const allowed = ["hatch", "mist", "forest", "paper", "mono"];
+  const allowed = [
+    "classic",
+    "classic-modern",
+    "hatch",
+    "mist",
+    "forest",
+    "paper",
+    "mono",
+    "bloomberg",
+    "matrix",
+    "dracula",
+    "nord",
+    "gruvbox",
+    "solarized",
+  ];
   if (saved && allowed.includes(saved)) {
     const el = document.documentElement;
     for (const a of allowed) el.classList.remove(`theme-${a}`);
