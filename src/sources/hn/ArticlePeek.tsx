@@ -7,11 +7,22 @@ type State =
   | { status: "error" }
   | { status: "ready"; article: Article };
 
-export function ArticlePeek({ url }: { url: string }) {
+export function ArticlePeek({
+  url,
+  variant = "inline",
+}: {
+  url: string;
+  /** "inline" sits under a story card (top divider); "card" is a standalone box. */
+  variant?: "inline" | "card";
+}) {
   const [state, setState] = useState<State>({ status: "loading" });
   const [full, setFull] = useState(false);
   const [imgOk, setImgOk] = useState(true);
   const contentRef = useRef<HTMLDivElement>(null);
+  const wrap =
+    variant === "card"
+      ? "card p-4 sm:p-5"
+      : "mt-3 border-t border-[color:var(--color-border)] pt-3";
 
   // Recover lazy-loaded images and hide ones that fail — many sites use
   // data-src placeholders or block hotlinking, which otherwise leaves
@@ -57,7 +68,7 @@ export function ArticlePeek({ url }: { url: string }) {
 
   if (state.status === "needs-permission") {
     return (
-      <div className="mt-3 border-t border-[color:var(--color-border)] pt-3 text-sm text-[color:var(--color-fg-muted)]">
+      <div className={wrap + " text-sm text-[color:var(--color-fg-muted)]"}>
         Turn on <span className="text-[color:var(--color-fg)]">Article previews</span>{" "}
         in the Hatch toolbar icon to read pages inline.{" "}
         <a
@@ -74,7 +85,7 @@ export function ArticlePeek({ url }: { url: string }) {
 
   if (state.status === "loading") {
     return (
-      <div className="mt-3 border-t border-[color:var(--color-border)] pt-3 text-sm text-[color:var(--color-fg-muted)]">
+      <div className={wrap + " text-sm text-[color:var(--color-fg-muted)]"}>
         Loading preview…
       </div>
     );
@@ -82,7 +93,7 @@ export function ArticlePeek({ url }: { url: string }) {
 
   if (state.status === "error") {
     return (
-      <div className="mt-3 border-t border-[color:var(--color-border)] pt-3 text-sm text-[color:var(--color-fg-muted)]">
+      <div className={wrap + " text-sm text-[color:var(--color-fg-muted)]"}>
         Couldn't load a preview for this page.{" "}
         <a
           href={url}
@@ -98,7 +109,7 @@ export function ArticlePeek({ url }: { url: string }) {
 
   const { article } = state;
   return (
-    <div className="mt-3 border-t border-[color:var(--color-border)] pt-3">
+    <div className={wrap}>
       {article.image && imgOk && (
         <img
           src={article.image}

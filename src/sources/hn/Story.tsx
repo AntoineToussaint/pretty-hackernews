@@ -4,7 +4,9 @@ import { fetchStory, type CommentNode, type StoryItem } from "./api";
 import { Upvote } from "./voteContext";
 import { getCommentForm } from "./auth";
 import { hostname, timeAgo } from "../../lib/format";
+import { isExtension } from "../../lib/runtime";
 import { SiteIcon } from "./SiteIcon";
+import { ArticlePeek } from "./ArticlePeek";
 import { Comment } from "./Comment";
 import { CommentBox } from "./CommentBox";
 import { Digest } from "./Digest";
@@ -76,6 +78,9 @@ export function Story({ itemId, onBack }: ItemViewProps) {
         {story && (
           <>
             <StoryHeader story={story} />
+            {story.url && isExtension() && (
+              <ArticlePeek url={story.url} variant="card" />
+            )}
             <Digest story={story} />
             <CommentBox
               parentId={String(story.id)}
