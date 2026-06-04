@@ -8,18 +8,35 @@ import {
 } from "./aiDigest";
 
 // Scroll to the picked comment (by id, falling back to author) and flash it.
-// Queries the shadow root the digest lives in, not the page document.
+// Queries the shadow root the digest lives in, not the page document. First
+// broadcasts a reveal request so any collapsed ancestor expands, then polls for
+// the target to mount (expansion re-renders asynchronously) before scrolling.
 function jumpToComment(root: Document | ShadowRoot, pick: DigestPick): void {
   const sel = pick.id
     ? `[data-comment-id="${pick.id}"]`
     : pick.author
       ? `[data-author="${pick.author.replace(/["\\]/g, "")}"]`
       : null;
-  const el = sel ? root.querySelector<HTMLElement>(sel) : null;
-  if (!el) return;
-  el.scrollIntoView({ behavior: "smooth", block: "center" });
-  el.classList.add("hatch-flash");
-  setTimeout(() => el.classList.remove("hatch-flash"), 1600);
+  if (!sel) return;
+
+  window.dispatchEvent(
+    new CustomEvent("hatch:reveal", {
+      detail: { id: pick.id, author: pick.author },
+    }),
+  );
+
+  let tries = 0;
+  const go = () => {
+    const el = root.querySelector<HTMLElement>(sel);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("hatch-flash");
+      setTimeout(() => el.classList.remove("hatch-flash"), 1600);
+    } else if (tries++ < 12) {
+      setTimeout(go, 50); // wait for collapsed ancestors to expand + mount
+    }
+  };
+  go();
 }
 
 function Spinner({ className = "size-4" }: { className?: string }) {

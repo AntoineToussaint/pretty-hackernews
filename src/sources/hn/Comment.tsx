@@ -47,6 +47,24 @@ export function Comment({
     if (collapseSignal && collapseSignal > 0) setCollapsed(!!collapseTo);
   }, [collapseSignal]);
 
+  // Reveal-on-jump: when the AI digest (or anything) wants to scroll to a
+  // comment that's buried under us, expand. We only need to react while
+  // collapsed; expanding re-mounts descendants in their default (expanded)
+  // state, so opening the top-most collapsed ancestor reveals the whole path.
+  useEffect(() => {
+    if (!collapsed) return;
+    const onReveal = (e: Event) => {
+      const d = (e as CustomEvent<{ id?: number; author?: string }>).detail ?? {};
+      const hit = (n: CommentNode): boolean =>
+        (d.id != null && n.id === d.id) ||
+        (!!d.author && n.author === d.author) ||
+        n.children.some(hit);
+      if (hit(node)) setCollapsed(false);
+    };
+    window.addEventListener("hatch:reveal", onReveal as EventListener);
+    return () => window.removeEventListener("hatch:reveal", onReveal as EventListener);
+  }, [collapsed, node]);
+
   return (
     <div
       data-comment-id={node.id}
