@@ -184,5 +184,10 @@ export async function postComment(
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
   });
-  return res.ok;
+  // HN answers 200 even when it rejects a post (rate-limited, expired hmac,
+  // too long…), so res.ok isn't enough — a silent failure would discard the
+  // user's text. On success HN redirects to the goto (the item page); a reject
+  // re-renders the /comment page in place. Treat "landed on the item page" as
+  // the success signal.
+  return res.ok && (res.redirected || /\/item\?id=/.test(res.url));
 }

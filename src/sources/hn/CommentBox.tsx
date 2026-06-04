@@ -82,7 +82,7 @@ export function CommentBox({
         onChange={(e) => setText(e.target.value)}
         placeholder={placeholder}
         rows={3}
-        className="w-full resize-y rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-bg)] p-2.5 text-sm text-[color:var(--color-fg)] outline-none placeholder:text-[color:var(--color-fg-muted)] focus:border-transparent focus:ring-accent"
+        className="w-full resize-y rounded-lg border border-[color:var(--color-fg-muted)]/35 bg-[color:var(--color-bg)] p-2.5 text-sm text-[color:var(--color-fg)] outline-none transition placeholder:text-[color:var(--color-fg-muted)] focus:border-[color:var(--color-accent)]"
       />
       <div className="mt-2 flex items-center justify-between">
         <span className="text-xs text-[color:var(--color-fg-muted)]">

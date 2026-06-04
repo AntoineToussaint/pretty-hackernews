@@ -3,7 +3,7 @@ import cssText from "data-text:../compiled.css";
 import { useEffect, useRef, useState } from "react";
 
 import { Header } from "../components/Header";
-import { SettingsPopover } from "../components/SettingsPopover";
+import { SettingsModal } from "../components/SettingsModal";
 import { hnSource } from "../sources/hn";
 import {
   fetchVoteLinksForUrl,
@@ -142,15 +142,14 @@ export default function HNReader() {
   useEffect(() => {
     if (!route) return;
     let cancelled = false;
-    const apply = (l: VoteLinks, src: string) => {
+    const apply = (l: VoteLinks) => {
       if (cancelled) return;
-      console.info(`[hatch] vote tokens (${src}):`, l.size);
       if (l.size > 0) setVoteLinks(l);
     };
-    apply(scrapeVoteLinksFromDOM(), "dom");
-    const onLoad = () => apply(scrapeVoteLinksFromDOM(), "dom-load");
+    apply(scrapeVoteLinksFromDOM());
+    const onLoad = () => apply(scrapeVoteLinksFromDOM());
     window.addEventListener("load", onLoad, { once: true });
-    fetchVoteLinksForUrl(location.href).then((l) => apply(l, "fetch"));
+    fetchVoteLinksForUrl(location.href).then(apply);
     return () => {
       cancelled = true;
       window.removeEventListener("load", onLoad);
@@ -216,16 +215,13 @@ export default function HNReader() {
         savedActive={savedOpen}
       />
       {settingsOpen && (
-        <SettingsPopover
+        <SettingsModal
           theme={theme}
           onThemeChange={setTheme}
           onClose={() => setSettingsOpen(false)}
           feeds={hnSource.feeds}
           defaultFeed={defaultFeed}
           onDefaultFeedChange={changeDefaultFeed}
-          onOpenAISettings={() =>
-            chrome.runtime.sendMessage({ type: "hatch-open-options" })
-          }
         />
       )}
       <main className="mx-auto max-w-3xl px-4 pb-24 pt-6 sm:pt-10">

@@ -27,43 +27,96 @@
     <p>
       Hatch is a browser extension that renders a calmer reader for
       <a href="https://news.ycombinator.com">news.ycombinator.com</a>. It is
-      local-first and built to collect nothing.
+      local-first: it has <strong>no servers of its own</strong>, no analytics,
+      and no tracking. This page lists every network request it makes and exactly
+      what triggers each one, so you can verify the claims against your browser's
+      network tab.
     </p>
 
     <h2>What we collect</h2>
     <p>
-      <strong>Nothing.</strong> Hatch has no servers, no analytics, no tracking,
-      and no third-party services. We do not collect, store, or transmit any
-      personal data or browsing activity.
+      <strong>Nothing.</strong> Hatch operates no backend and runs no analytics.
+      We do not collect, store, or transmit your personal data or browsing
+      activity to any server we control — because we don't have one.
     </p>
 
     <h2>Where your data lives</h2>
     <p>
-      Your preferences — theme, read/seen stories, bookmarks, muted domains, and
-      default feed — are stored only in your browser via
-      <code>chrome.storage.local</code>. They never leave your device.
+      Your preferences and state — theme, read/seen stories, bookmarks, muted
+      domains, default feed, and (if you use AI) your API key, profile text, and
+      interest tags — are stored only in your browser via
+      <code>chrome.storage.local</code>. They never leave your device except as
+      described below.
     </p>
 
-    <h2>Network access</h2>
+    <h2>Network access — the complete list</h2>
     <ul>
       <li>
-        Hatch talks to <strong>news.ycombinator.com</strong> to display the feed
-        and comments and, when you choose to, to vote or comment using your own
-        existing HN login. Your HN credentials are never seen or stored by Hatch.
+        <strong>news.ycombinator.com</strong> — to read the feed/comments and,
+        when you choose to, vote or comment using your <em>own existing HN
+        login</em>. Hatch uses the cookie already in your browser (exactly as
+        clicking the real arrows does); it never sees, stores, or transmits your
+        HN password or credentials.
       </li>
       <li>
-        If you enable <strong>Article previews</strong>, Hatch fetches the single
-        linked page you click “Preview” on, in order to show its text inline.
-        Nothing is fetched unless you click Preview, and the result is not stored
-        or sent anywhere.
+        <strong>hacker-news.firebaseio.com</strong> and
+        <strong>hn.algolia.com</strong> — Hacker News's own official, public data
+        APIs (run by Y Combinator and its partner). Anonymous reads only, no
+        cookies, no personal data — used to fetch feed rankings and comment
+        threads as structured data.
+      </li>
+      <li>
+        <strong>www.google.com</strong> (favicons) and
+        <strong>fonts.googleapis.com</strong> (the Inter font) — to show the
+        little site icons next to links and the reader's font. The favicon
+        request includes the domain of the linked sites in your feed.
+      </li>
+      <li>
+        <strong>Article previews (optional, off by default)</strong> — only if
+        you turn this on, and only when you click “Preview,” Hatch fetches that
+        one linked page to show its text inline. Nothing is fetched otherwise,
+        and the result is not stored or sent anywhere.
+      </li>
+      <li>
+        <strong>AI features (optional, off by default — only if you want them)</strong>
+        — see below.
+      </li>
+    </ul>
+
+    <h2>AI is opt-in</h2>
+    <p>
+      Hatch makes <strong>no AI calls at all</strong> unless you choose to enable
+      AI and provide your own API key. There is no AI by default.
+    </p>
+    <ul>
+      <li>
+        When (and only when) you click <strong>AI digest</strong> or
+        <strong>Suggest tags</strong>, Hatch sends a request directly from your
+        browser to the provider you chose — <strong>api.anthropic.com</strong> or
+        <strong>api.openai.com</strong> — using <em>your</em> key. The request
+        passes through no server of ours.
+      </li>
+      <li>
+        That request contains the post and its comments (for a digest) or your
+        profile text (for tag suggestions), so it can be summarized or matched to
+        your interests. Your key is stored only in your browser and is never sent
+        anywhere except to your chosen provider.
+      </li>
+      <li>
+        AI is used <strong>only to help you read</strong> — summarizing threads
+        and matching stories to your interests. Hatch does
+        <strong>not</strong> use AI to generate, draft, or post comments,
+        replies, or submissions, or to vote, on your behalf. (This is a standing
+        commitment of the project — see the LICENSE.)
       </li>
     </ul>
 
     <h2>Permissions</h2>
     <ul>
       <li><strong>news.ycombinator.com access</strong> — to render the reader and act on your behalf when you vote/comment.</li>
-      <li><strong>storage</strong> — to save your preferences locally.</li>
-      <li><strong>declarativeNetRequest</strong> — to relax HN's content-security-policy on HN's own pages so site icons, fonts, and preview images can load. No requests are blocked or redirected.</li>
+      <li><strong>api.anthropic.com / api.openai.com access</strong> — used only when you turn on AI and trigger it, to call the provider you chose with your key.</li>
+      <li><strong>storage</strong> — to save your preferences and (if you use AI) your key locally.</li>
+      <li><strong>declarativeNetRequest</strong> — to relax HN's content-security-policy on HN's own pages so site icons, fonts, and preview images can load. No requests are blocked or redirected. (It also strips the Origin header on Hatch's own calls to api.anthropic.com so keys on zero-data-retention orgs work; this is scoped to Hatch's own requests and never affects other sites.)</li>
       <li><strong>Broad site access (optional)</strong> — requested only if you turn on Article previews; used solely to fetch a page you click Preview on.</li>
     </ul>
 

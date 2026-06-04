@@ -1,5 +1,59 @@
 import type { CommentNode, StoryItem } from "./api";
 import { hostname } from "../../lib/format";
+import { DEFAULT_MODELS, type Provider } from "../../lib/llm";
+
+export type AiSettings = {
+  provider: Provider;
+  apiKey: string;
+  model: string;
+  profile: string;
+  interests: string[];
+};
+
+const EMPTY_SETTINGS: AiSettings = {
+  provider: "claude",
+  apiKey: "",
+  model: "",
+  profile: "",
+  interests: [],
+};
+
+/** Read the saved AI/profile settings from extension storage. */
+export function loadAiSettings(): Promise<AiSettings> {
+  return new Promise((resolve) => {
+    const local = chromeApi?.storage?.local;
+    if (!local) return resolve(EMPTY_SETTINGS);
+    local.get(
+      ["aiProvider", "aiKey", "aiModel", "aiProfile", "aiInterests"],
+      (r) =>
+        resolve({
+          provider: r.aiProvider === "openai" ? "openai" : "claude",
+          apiKey: typeof r.aiKey === "string" ? r.aiKey : "",
+          model: typeof r.aiModel === "string" ? r.aiModel : "",
+          profile: typeof r.aiProfile === "string" ? r.aiProfile : "",
+          interests: Array.isArray(r.aiInterests) ? (r.aiInterests as string[]) : [],
+        }),
+    );
+  });
+}
+
+/** Persist AI/profile settings; falls back to the provider's default model. */
+export function saveAiSettings(s: AiSettings): Promise<void> {
+  return new Promise((resolve) => {
+    const local = chromeApi?.storage?.local;
+    if (!local) return resolve();
+    local.set(
+      {
+        aiProvider: s.provider,
+        aiKey: s.apiKey.trim(),
+        aiModel: s.model.trim() || DEFAULT_MODELS[s.provider],
+        aiProfile: s.profile.trim(),
+        aiInterests: s.interests,
+      },
+      () => resolve(),
+    );
+  });
+}
 
 export type DigestPick = {
   author: string;
@@ -18,7 +72,10 @@ type ChromeLike = {
     lastError?: unknown;
   };
   storage?: {
-    local?: { get: (keys: string[], cb: (items: Record<string, unknown>) => void) => void };
+    local?: {
+      get: (keys: string[], cb: (items: Record<string, unknown>) => void) => void;
+      set: (items: Record<string, unknown>, cb?: () => void) => void;
+    };
   };
 };
 const chromeApi = (globalThis as unknown as { chrome?: ChromeLike }).chrome;
@@ -161,26 +218,37 @@ export async function suggestTags(
 export async function digestStory(
   story: StoryItem,
 ): Promise<{ ok: true; digest: Digest } | { ok: false; error: string }> {
-  const { profile, interests } = await getProfile();
-  const { system, user } = buildPrompt(story, profile, interests);
-  const res = await send<{ ok: boolean; text?: string; error?: string }>({
-    type: "hatch-llm",
-    system,
-    user,
-    maxTokens: 1200,
-  });
-  if (!res) return { ok: false, error: "No response from the extension." };
-  if (!res.ok) {
+  try {
+    const { profile, interests } = await getProfile();
+    const { system, user } = buildPrompt(story, profile, interests);
+    const res = await send<{ ok: boolean; text?: string; error?: string }>({
+      type: "hatch-llm",
+      system,
+      user,
+      maxTokens: 1500,
+    });
+    if (!res) return { ok: false, error: "No response from the extension." };
+    if (!res.ok) {
+      return {
+        ok: false,
+        error:
+          res.error === "not-configured"
+            ? "Add your API key in Settings (the gear, top-right)."
+            : res.error || "AI request failed.",
+      };
+    }
+    const text = res.text ?? "";
+    const digest = parseDigest(text);
+    if (digest) return { ok: true, digest };
+    // Surface a snippet so a malformed/empty model response is diagnosable.
+    const snippet = text.trim().slice(0, 200);
     return {
       ok: false,
-      error:
-        res.error === "not-configured"
-          ? "Add your API key in the Hatch settings (toolbar icon → AI & profile settings)."
-          : res.error || "AI request failed.",
+      error: snippet
+        ? `Couldn't parse the AI response: ${snippet}…`
+        : "The model returned an empty response.",
     };
+  } catch (e) {
+    return { ok: false, error: String(e) };
   }
-  const digest = parseDigest(res.text ?? "");
-  return digest
-    ? { ok: true, digest }
-    : { ok: false, error: "Couldn't parse the AI response." };
 }

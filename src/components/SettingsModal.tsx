@@ -1,49 +1,74 @@
 import { useState } from "react";
 import { THEMES, type ThemeId } from "../lib/themes";
 import { usePrefs } from "../sources/hn/prefsContext";
+import { AiProfileForm } from "./AiProfileForm";
 
 type Props = {
   theme: ThemeId;
   onThemeChange: (theme: ThemeId) => void;
   onClose: () => void;
-  /** Optional "open HN to" default-feed control. */
   feeds?: { id: string; label: string }[];
   defaultFeed?: string;
   onDefaultFeedChange?: (id: string) => void;
-  onOpenAISettings?: () => void;
 };
 
-/** Lightweight settings popover anchored to the header gear. */
-export function SettingsPopover({
+const sectionTitle =
+  "mb-2 text-[11px] font-medium uppercase tracking-wider text-[color:var(--color-fg-muted)]";
+
+/** The single in-reader settings surface — everything lives here, on the page. */
+export function SettingsModal({
   theme,
   onThemeChange,
   onClose,
   feeds,
   defaultFeed,
   onDefaultFeedChange,
-  onOpenAISettings,
 }: Props) {
   const prefs = usePrefs();
   const [themeOpen, setThemeOpen] = useState(false);
   const current = THEMES.find((t) => t.id === theme) ?? THEMES[0];
+
   return (
-    <>
-      {/* click-away backdrop */}
-      <div className="fixed inset-0 z-[60]" onClick={onClose} aria-hidden="true" />
+    <div
+      className="fixed inset-0 z-[2147483640] grid place-items-start justify-center overflow-y-auto bg-black/50 p-4 pt-[6vh] backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Hatch settings"
+    >
       <div
-        role="dialog"
-        aria-label="Settings"
-        className="card fixed right-4 top-16 z-[61] w-64 p-3 shadow-xl"
+        className="card w-full max-w-lg p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wider text-[color:var(--color-fg-muted)]">
-          Theme
+        <div className="mb-5 flex items-center justify-between">
+          <h2 className="text-lg font-semibold tracking-tight">Settings</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close settings"
+            className="grid size-8 place-items-center rounded-full text-[color:var(--color-fg-muted)] transition hover:bg-[color:var(--color-bg-elev)] hover:text-[color:var(--color-fg)]"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              className="size-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              aria-hidden="true"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
         </div>
-        {/* collapsed trigger — keeps the popover short with many themes */}
+
+        {/* Theme */}
+        <div className={sectionTitle}>Theme</div>
         <button
           type="button"
           onClick={() => setThemeOpen((o) => !o)}
           aria-expanded={themeOpen}
-          className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm ring-1 ring-[color:var(--color-border)] transition hover:bg-[color:var(--color-bg-elev)]"
+          className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm ring-1 ring-[color:var(--color-border)] transition hover:bg-[color:var(--color-bg-elev)]"
         >
           <span
             className="size-5 shrink-0 rounded-md ring-1 ring-[color:var(--color-border)]"
@@ -69,7 +94,7 @@ export function SettingsPopover({
           </svg>
         </button>
         {themeOpen && (
-          <div className="mt-1 max-h-56 space-y-0.5 overflow-y-auto pr-0.5">
+          <div className="mt-1 max-h-60 space-y-0.5 overflow-y-auto pr-0.5">
             {THEMES.map((t) => {
               const active = t.id === theme;
               return (
@@ -82,7 +107,7 @@ export function SettingsPopover({
                   }}
                   aria-pressed={active}
                   className={
-                    "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left text-sm transition " +
+                    "flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition " +
                     (active
                       ? "bg-[color:var(--color-bg-elev)] ring-1 ring-[color:var(--color-accent)]"
                       : "hover:bg-[color:var(--color-bg-elev)]")
@@ -115,11 +140,10 @@ export function SettingsPopover({
           </div>
         )}
 
+        {/* Default feed */}
         {feeds && onDefaultFeedChange && (
-          <div className="mt-3 border-t border-[color:var(--color-border)] pt-3">
-            <div className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wider text-[color:var(--color-fg-muted)]">
-              Open HN to
-            </div>
+          <div className="mt-6 border-t border-[color:var(--color-border)] pt-5">
+            <div className={sectionTitle}>Open HN to</div>
             <div className="flex flex-wrap gap-1.5">
               {feeds.map((f) => {
                 const active = f.id === defaultFeed;
@@ -130,7 +154,7 @@ export function SettingsPopover({
                     onClick={() => onDefaultFeedChange(f.id)}
                     aria-pressed={active}
                     className={
-                      "rounded-full px-2.5 py-1 text-xs font-medium transition " +
+                      "rounded-full px-3 py-1.5 text-xs font-medium transition " +
                       (active
                         ? "accent-bg text-white"
                         : "bg-[color:var(--color-bg-elev)] text-[color:var(--color-fg-muted)] hover:text-[color:var(--color-fg)]")
@@ -144,11 +168,10 @@ export function SettingsPopover({
           </div>
         )}
 
+        {/* Muted domains */}
         {prefs.muted.length > 0 && (
-          <div className="mt-3 border-t border-[color:var(--color-border)] pt-3">
-            <div className="mb-2 px-1 text-[11px] font-medium uppercase tracking-wider text-[color:var(--color-fg-muted)]">
-              Muted domains
-            </div>
+          <div className="mt-6 border-t border-[color:var(--color-border)] pt-5">
+            <div className={sectionTitle}>Muted domains</div>
             <div className="flex flex-wrap gap-1.5">
               {prefs.muted.map((host) => (
                 <button
@@ -166,16 +189,16 @@ export function SettingsPopover({
           </div>
         )}
 
-        {onOpenAISettings && (
-          <button
-            type="button"
-            onClick={onOpenAISettings}
-            className="mt-3 w-full rounded-lg border border-[color:var(--color-border)] py-2 text-sm font-medium text-[color:var(--color-fg)] transition hover:bg-[color:var(--color-bg-elev)]"
-          >
-            ✨ AI &amp; profile settings
-          </button>
-        )}
+        {/* AI & profile */}
+        <div className="mt-6 border-t border-[color:var(--color-border)] pt-5">
+          <div className={sectionTitle}>✨ AI &amp; profile</div>
+          <p className="mb-1 text-xs text-[color:var(--color-fg-muted)]">
+            Bring your own key. It's stored only in this browser and used to call
+            the provider directly — nothing goes to any other server.
+          </p>
+          <AiProfileForm />
+        </div>
       </div>
-    </>
+    </div>
   );
 }

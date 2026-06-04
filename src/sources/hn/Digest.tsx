@@ -1,6 +1,59 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { StoryItem } from "./api";
 import { aiConfigured, digestStory, type Digest as DigestData } from "./aiDigest";
+
+function Spinner({ className = "size-4" }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className={"animate-spin " + className}
+      fill="none"
+      aria-hidden="true"
+    >
+      <circle
+        cx="12"
+        cy="12"
+        r="9"
+        stroke="currentColor"
+        strokeWidth="3"
+        className="opacity-25"
+      />
+      <path
+        d="M21 12a9 9 0 0 0-9-9"
+        stroke="currentColor"
+        strokeWidth="3"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+const LOADING_STEPS = [
+  "Reading the thread…",
+  "Weighing it against your interests…",
+  "Picking the comments worth your time…",
+];
+
+/** Animated placeholder with a spinner and rotating status copy. */
+function LoadingCard() {
+  const [step, setStep] = useState(0);
+  const ref = useRef(0);
+  useEffect(() => {
+    const t = setInterval(() => {
+      ref.current = Math.min(ref.current + 1, LOADING_STEPS.length - 1);
+      setStep(ref.current);
+    }, 1800);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="card flex items-center gap-3 p-4 text-sm text-[color:var(--color-fg-muted)]">
+      <span className="text-[color:var(--color-accent)]">
+        <Spinner className="size-4" />
+      </span>
+      {LOADING_STEPS[step]}
+    </div>
+  );
+}
 
 type State =
   | { s: "checking" }
@@ -45,22 +98,18 @@ export function Digest({ story }: { story: StoryItem }) {
           onClick={run}
           className="accent-bg inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
         >
-          ✨ AI digest
+          ✨ {state.s === "error" ? "Try AI digest again" : "AI digest"}
         </button>
         {state.s === "error" && (
-          <p className="text-xs text-[color:var(--color-fg-muted)]">{state.msg}</p>
+          <div className="rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-bg-elev)] p-2.5 text-xs leading-relaxed text-[color:var(--color-fg-muted)]">
+            {state.msg}
+          </div>
         )}
       </div>
     );
   }
 
-  if (state.s === "loading") {
-    return (
-      <div className="card p-4 text-sm text-[color:var(--color-fg-muted)]">
-        Reading the thread for you…
-      </div>
-    );
-  }
+  if (state.s === "loading") return <LoadingCard />;
 
   const { data } = state;
   const worthColor =

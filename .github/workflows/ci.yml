@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      # Trust guarantees (no document.cookie, session only to HN, previews sent
+      # without cookies, LLM only to the providers, and no egress outside the
+      # documented allowlist) plus unit tests.
+      - name: Test
+        run: bun test
+
+      - name: Typecheck + web build
+        run: bun run build

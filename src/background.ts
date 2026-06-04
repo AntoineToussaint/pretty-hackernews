@@ -1,14 +1,17 @@
 import { complete, type Provider } from "./lib/llm";
 
-// Strips HN's Content-Security-Policy on its own pages so our in-place reader
-// can load external images (favicons, article hero images) and the Inter web
-// font — all of which HN's `img-src 'self'` / `style-src 'self'` would block.
+// Network-layer header rules, installed via declarativeNetRequest.
 const CSP_RULE_ID = 1;
+const ANTHROPIC_ORIGIN_RULE_ID = 2;
 
-async function installCspRule() {
+async function installRules() {
   try {
+    // Dynamic rule: strip HN's Content-Security-Policy on its own pages so our
+    // in-place reader can load external images (favicons, article hero images)
+    // and the Inter font — all of which HN's `img-src 'self'` would block. This
+    // necessarily targets HN's top-level navigation (a real tab request).
     await chrome.declarativeNetRequest.updateDynamicRules({
-      removeRuleIds: [CSP_RULE_ID],
+      removeRuleIds: [CSP_RULE_ID, ANTHROPIC_ORIGIN_RULE_ID],
       addRules: [
         {
           id: CSP_RULE_ID,
@@ -27,8 +30,37 @@ async function installCspRule() {
         },
       ],
     });
+
+    // Session rule: strip the `Origin` header on OUR calls to the Anthropic
+    // API. Chrome attaches `Origin: chrome-extension://…` to background fetches,
+    // which makes Anthropic treat them as browser/CORS requests — and orgs with
+    // zero-data-retention settings reject those with a 401. Removing Origin
+    // makes it a plain server-side request, so ZDR-org keys work.
+    //
+    // `tabIds: [-1]` restricts this to requests not associated with any tab —
+    // i.e. the extension's own service-worker fetches — so it can NEVER touch a
+    // real web page's calls to api.anthropic.com (tabIds is session-only). This
+    // is why the rule lives in session rules, not dynamic rules.
+    await chrome.declarativeNetRequest.updateSessionRules({
+      removeRuleIds: [ANTHROPIC_ORIGIN_RULE_ID],
+      addRules: [
+        {
+          id: ANTHROPIC_ORIGIN_RULE_ID,
+          priority: 1,
+          action: {
+            type: "modifyHeaders",
+            requestHeaders: [{ header: "origin", operation: "remove" }],
+          },
+          condition: {
+            urlFilter: "||api.anthropic.com",
+            resourceTypes: ["xmlhttprequest"],
+            tabIds: [-1],
+          },
+        },
+      ],
+    });
   } catch (e) {
-    console.error("[hatch] failed to install CSP rule", e);
+    console.error("[hatch] failed to install header rules", e);
   }
 }
 
@@ -51,12 +83,6 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
       sendResponse({ granted }),
     );
     return true;
-  }
-
-  // Open the options page as a full tab (not the cramped embedded pane).
-  if (msg?.type === "hatch-open-options") {
-    chrome.tabs.create({ url: chrome.runtime.getURL("options.html") });
-    return;
   }
 
   // Is the AI configured? (key kept in the background; not exposed to content.)
@@ -89,8 +115,8 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   }
 });
 
-chrome.runtime.onInstalled.addListener(installCspRule);
-chrome.runtime.onStartup.addListener(installCspRule);
+chrome.runtime.onInstalled.addListener(installRules);
+chrome.runtime.onStartup.addListener(installRules);
 // Also run when the service worker spins up (dynamic rules persist, so this is
 // idempotent thanks to removeRuleIds).
-installCspRule();
+installRules();

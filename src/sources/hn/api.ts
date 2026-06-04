@@ -1,4 +1,21 @@
+import DOMPurify from "dompurify";
+
 export type Feed = "top" | "new" | "best" | "ask" | "show" | "jobs";
+
+// Comment/story bodies come from the Algolia mirror and are injected with
+// dangerouslySetInnerHTML into the reader — which runs in the
+// news.ycombinator.com origin with HN's CSP stripped. Sanitize them down to the
+// small tag set HN itself renders so nothing executable can slip through.
+const ALLOWED_TAGS = ["a", "i", "em", "b", "strong", "code", "pre", "p", "blockquote", "br"];
+function sanitizeHtml(html: string | null): string | null {
+  if (html == null) return html;
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS,
+    ALLOWED_ATTR: ["href", "rel", "title"],
+    // Only safe link schemes; blocks javascript:, data:, etc.
+    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|#|\/)/i,
+  });
+}
 
 export type StoryHit = {
   objectID: string;
@@ -103,7 +120,7 @@ function normalizeComments(node: AlgoliaItem): CommentNode {
   return {
     id: node.id,
     author: node.author ?? null,
-    text: node.text,
+    text: sanitizeHtml(node.text),
     created_at_i: node.created_at_i,
     children: (node.children ?? []).map(normalizeComments),
   };
@@ -117,7 +134,7 @@ export async function fetchStory(id: string | number): Promise<StoryItem> {
     url: data.url,
     points: data.points,
     author: data.author,
-    text: data.text,
+    text: sanitizeHtml(data.text),
     created_at_i: data.created_at_i,
     children: (data.children ?? []).map(normalizeComments),
   };

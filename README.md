@@ -14,7 +14,8 @@ standalone web build of the same reader.
 
 - Renders in place on news.ycombinator.com (feed + item pages; other HN pages
   stay native)
-- Five themes (dark + light), switched from an in-page settings popover
+- Named themes including a faithful, dense **Classic** look as the default,
+  switched from an in-page settings modal
 - Instant client-side navigation — no full reloads; back/forward work
 - Keyboard nav — `j`/`k` move, `o`/`Enter` open, `u` upvote
 - **Upvote, comment, and reply** on your real HN account (no passwords stored)
@@ -22,7 +23,11 @@ standalone web build of the same reader.
 - Save/bookmark, mute domains, collapse threads, default feed
 - Optional **inline article previews** — read the linked page (clean text +
   image) without leaving HN
-- Local-first: no servers, no analytics; preferences live in `chrome.storage`
+- Optional **AI digest** (off by default, bring your own key) — summarizes a
+  thread and matches stories to your interests. Reading-only — see *Privacy &
+  trust*.
+- Local-first: no servers of our own, no analytics; preferences live in
+  `chrome.storage`
 
 ## Stack
 
@@ -105,7 +110,7 @@ src/
   background.ts         # CSP strip + article fetch (Plasmo background)
   popup.tsx             # toolbar popup: opt-in to article previews
   App.tsx               # standalone web entry (source-aware router + theme)
-  components/           # shared chrome: Header, ThemeSwitcher, SettingsPopover…
+  components/           # shared chrome: Header, SettingsModal, AiProfileForm…
   sources/
     types.ts            # the Source contract every skin implements
     registry.ts         # installed sources
@@ -124,12 +129,39 @@ src/
 ## Permissions
 
 - **news.ycombinator.com** — render the reader; vote/comment with your session.
-- **storage** — save preferences locally.
+- **api.anthropic.com / api.openai.com** — used only if you enable AI and
+  trigger it, to call the provider you chose with your own key.
+- **storage** — save preferences (and, if you use AI, your key) locally.
 - **declarativeNetRequest** — relax HN's CSP on HN's pages so icons/fonts/preview
-  images load (no requests blocked or redirected).
+  images load (no requests blocked or redirected). Also strips the `Origin`
+  header on the extension's *own* calls to api.anthropic.com (scoped via
+  `tabIds:[-1]`) so keys on zero-data-retention orgs work — never touches other
+  sites' requests.
 - **broad host access (optional)** — requested only if you enable Article
   previews; used solely to fetch a page you click "Preview" on.
 
+## Privacy & trust
+
+Hatch is local-first: it runs **no servers of its own** and **no analytics**.
+The complete list of network calls it makes — and exactly what triggers each —
+is in [`public/privacy.html`](./public/privacy.html). The trust guarantees are
+also enforced mechanically in [`test/trust.test.ts`](./test/trust.test.ts),
+which runs in CI: it asserts the code never reads `document.cookie`, only sends
+your logged-in session to Hacker News, fetches previews without cookies, and
+contacts no host outside a documented allowlist.
+
+**AI is opt-in.** With no API key, Hatch makes no AI calls of any kind. When you
+do enable it, requests go directly from your browser to the provider you chose
+(Anthropic or OpenAI) with **your** key — through no server of ours.
+
+**AI is for reading, never for speaking.** The AI features exist only to help
+you read: summarizing threads and matching stories to your interests. Hatch does
+**not**, and per the project covenant in the [LICENSE](./LICENSE) **must never
+be updated to**, use AI to generate, draft, or post comments, replies, or
+submissions, or to vote, on anyone's behalf. Automating participation would
+erode the signal that makes HN worth reading.
+
 ## Licence
 
-MIT. Not affiliated with Y Combinator.
+MIT, plus a project covenant that AI must never be used to write comments/posts
+or vote — see [LICENSE](./LICENSE). Not affiliated with Y Combinator.

@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -44,6 +45,11 @@ export function VoteProvider({
 
   const [voted, setVoted] = useState<Set<number>>(initialVoted);
   const [busy, setBusy] = useState<Set<number>>(() => new Set());
+
+  // On client-side navigation the `links` (and thus the server-truth set of
+  // already-voted ids) change, but useState keeps its first value — which left
+  // stale upvote highlighting across views. Re-sync to the new server truth.
+  useEffect(() => setVoted(initialVoted), [initialVoted]);
 
   const api = useMemo<VoteApi>(() => {
     const enabled = Boolean(links && links.size > 0);

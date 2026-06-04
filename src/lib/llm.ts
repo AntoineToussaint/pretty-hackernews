@@ -33,8 +33,13 @@ export async function complete(
           "content-type": "application/json",
           "x-api-key": cfg.apiKey,
           "anthropic-version": "2023-06-01",
-          // Required for direct browser-context calls to the Anthropic API.
-          "anthropic-dangerous-direct-browser-access": "true",
+          // NB: we deliberately do NOT send
+          // `anthropic-dangerous-direct-browser-access`. That header opts into
+          // Anthropic's browser/CORS path, which orgs with custom data-retention
+          // (zero-retention) settings reject with a 401. This fetch runs in the
+          // MV3 background service worker with api.anthropic.com in
+          // host_permissions, so Chrome doesn't enforce CORS and the header is
+          // unnecessary — omitting it lets ZDR-org keys work.
         },
         body: JSON.stringify({
           model: cfg.model || DEFAULT_MODELS.claude,
