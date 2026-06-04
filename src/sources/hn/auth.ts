@@ -1,4 +1,5 @@
 import { isExtension } from "../../lib/runtime";
+import { dlog } from "../../lib/debug";
 
 const HN = "https://news.ycombinator.com";
 
@@ -104,11 +105,13 @@ export function scrapeVoteLinksFromDOM(): VoteLinks {
   const anchors = document.querySelectorAll<HTMLAnchorElement>(
     'a[id^="up_"], a[id^="un_"]',
   );
+  let withAuth = 0;
   for (const a of anchors) {
     const m = a.id.match(/^(up|un)_(\d+)$/);
     if (!m) continue;
     const href = a.getAttribute("href") || "";
     if (!/[?&]auth=/.test(href)) continue; // logged-out arrow, not actionable
+    withAuth++;
     const id = Number(m[2]);
     let e = links.get(id);
     if (!e) {
@@ -119,6 +122,9 @@ export function scrapeVoteLinksFromDOM(): VoteLinks {
     if (m[1] === "up") e.up = url;
     else e.un = url;
   }
+  dlog(
+    `scrapeVoteLinksFromDOM: ${anchors.length} arrows in DOM, ${withAuth} with auth → ${links.size} actionable`,
+  );
   return links;
 }
 
@@ -136,6 +142,7 @@ export function authStateFromDOM(): AuthState {
 /** Perform a scraped vote/unvote URL (an HN vote is a plain GET). */
 export async function castVote(url: string): Promise<void> {
   const res = await fetch(url, { credentials: "include" });
+  dlog("castVote response", { status: res.status, ok: res.ok, url: res.url });
   if (!res.ok) throw new Error(`Vote failed: HTTP ${res.status}`);
 }
 

@@ -6,10 +6,12 @@ import { Header } from "../components/Header";
 import { SettingsModal } from "../components/SettingsModal";
 import { hnSource } from "../sources/hn";
 import {
+  authStateFromDOM,
   fetchVoteLinksForUrl,
   scrapeVoteLinksFromDOM,
   type VoteLinks,
 } from "../sources/hn/auth";
+import { dlog, setDebug } from "../lib/debug";
 import { VoteProvider } from "../sources/hn/voteContext";
 import { SeenProvider } from "../sources/hn/seenContext";
 import { PrefsProvider } from "../sources/hn/prefsContext";
@@ -72,6 +74,8 @@ export default function HNReader() {
   const [voteLinks, setVoteLinks] = useState<VoteLinks | null>(null);
   const [defaultFeed, setDefaultFeed] = useState("top");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const voteLinksRef = useRef<VoteLinks | null>(voteLinks);
+  voteLinksRef.current = voteLinks;
   // The URL we originally loaded — while it matches, HN's own DOM is valid to
   // scrape; after a client-side nav it no longer matches, so we fetch instead.
   const initialUrl = useRef(location.pathname + location.search);
@@ -99,6 +103,26 @@ export default function HNReader() {
   useEffect(() => {
     chrome.storage?.local.set({ theme });
   }, [theme]);
+
+  // Console inspector — lets you poke at state and flip on verbose logging from
+  // the page's DevTools console without a rebuild. See src/lib/debug.ts.
+  useEffect(() => {
+    const g = globalThis as unknown as { hatch?: unknown };
+    g.hatch = {
+      debug: (on = true) => setDebug(on),
+      voteLinks: () => scrapeVoteLinksFromDOM(), // re-scrape HN's DOM now
+      applied: () => voteLinksRef.current, // what the reader is currently using
+      auth: () => authStateFromDOM(),
+    };
+    console.info(
+      "%c[hatch]%c loaded — run hatch.debug(true) here for verbose logs; hatch.voteLinks() / hatch.auth() to inspect",
+      "color:#ff6600;font-weight:bold",
+      "color:inherit",
+    );
+    return () => {
+      delete (g as { hatch?: unknown }).hatch;
+    };
+  }, []);
 
   // Default feed: redirect the bare homepage ("/") to the preferred feed.
   useEffect(() => {
@@ -142,14 +166,17 @@ export default function HNReader() {
   useEffect(() => {
     if (!route) return;
     let cancelled = false;
-    const apply = (l: VoteLinks) => {
+    const apply = (l: VoteLinks, src: string) => {
       if (cancelled) return;
-      if (l.size > 0) setVoteLinks(l);
+      if (l.size > 0) {
+        dlog(`vote links applied (${src}):`, l.size);
+        setVoteLinks(l);
+      }
     };
-    apply(scrapeVoteLinksFromDOM());
-    const onLoad = () => apply(scrapeVoteLinksFromDOM());
+    apply(scrapeVoteLinksFromDOM(), "dom");
+    const onLoad = () => apply(scrapeVoteLinksFromDOM(), "dom-load");
     window.addEventListener("load", onLoad, { once: true });
-    fetchVoteLinksForUrl(location.href).then(apply);
+    fetchVoteLinksForUrl(location.href).then((l) => apply(l, "fetch"));
     return () => {
       cancelled = true;
       window.removeEventListener("load", onLoad);

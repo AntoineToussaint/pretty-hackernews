@@ -7,6 +7,21 @@ import {
   type ReactNode,
 } from "react";
 import { castVote, type VoteLinks } from "./auth";
+import { dlog, dwarn } from "../../lib/debug";
+
+const KEY = "votedIds";
+const CAP = 2000; // bound storage growth
+
+type LocalStore = {
+  get: (key: string, cb: (items: Record<string, unknown>) => void) => void;
+  set: (items: Record<string, unknown>) => void;
+};
+
+// Typed chrome.storage.local access without @types/chrome (shared with the web
+// build, where `chrome` is undefined → store is null and nothing persists).
+const store: LocalStore | null =
+  (globalThis as unknown as { chrome?: { storage?: { local?: LocalStore } } })
+    .chrome?.storage?.local ?? null;
 
 type VoteApi = {
   enabled: boolean;
@@ -46,6 +61,19 @@ export function VoteProvider({
   const [voted, setVoted] = useState<Set<number>>(initialVoted);
   const [busy, setBusy] = useState<Set<number>>(() => new Set());
 
+  // Load our own persisted record of votes cast through Hatch, so we keep
+  // showing "you voted" even on views where HN's DOM doesn't expose the
+  // unvote link (e.g. feed pages often render only the up-arrow).
+  useEffect(() => {
+    store?.get(KEY, (r) => {
+      const ids = r[KEY];
+      if (Array.isArray(ids) && ids.length) {
+        dlog("loaded persisted votes:", ids.length);
+        setVoted((prev) => new Set([...prev, ...(ids as number[])]));
+      }
+    });
+  }, []);
+
   // When `links` change (client-side nav, or the post-load vote-token re-fetch),
   // fold in any server-known "already voted" ids — but MERGE, never replace, so
   // a vote the user just cast optimistically is never wiped by a re-fetch that
@@ -53,6 +81,7 @@ export function VoteProvider({
   useEffect(() => {
     setVoted((prev) => {
       if ([...initialVoted].every((id) => prev.has(id))) return prev;
+      dlog("merging server-known votes:", initialVoted.size);
       return new Set([...prev, ...initialVoted]);
     });
   }, [initialVoted]);
@@ -75,22 +104,33 @@ export function VoteProvider({
       pending: (id) => busy.has(id),
       toggle: (id) => {
         const link = links?.get(id);
-        if (!link) return;
         const isVoted = voted.has(id);
-        const url = isVoted ? link.un : link.up;
-        if (!url || busy.has(id)) return;
+        const url = isVoted ? link?.un : link?.up;
+        if (!url) {
+          dwarn("no actionable vote link for", id, {
+            isVoted,
+            hasLink: !!link,
+            up: link?.up ?? null,
+            un: link?.un ?? null,
+          });
+          return;
+        }
+        if (busy.has(id)) return;
+        dlog(`${isVoted ? "unvote" : "upvote"} ${id} →`, url);
         setBusyFlag(id, true);
         castVote(url)
           .then(() => {
+            dlog(`${isVoted ? "unvote" : "upvote"} ${id} ✓`);
             setVoted((prev) => {
               const next = new Set(prev);
               if (isVoted) next.delete(id);
               else next.add(id);
+              store?.set({ [KEY]: [...next].slice(-CAP) });
               return next;
             });
           })
-          .catch(() => {
-            /* leave state unchanged on failure */
+          .catch((e) => {
+            dwarn(`vote ${id} failed`, e);
           })
           .finally(() => setBusyFlag(id, false));
       },
