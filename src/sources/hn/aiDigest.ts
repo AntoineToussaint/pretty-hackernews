@@ -34,6 +34,32 @@ function today(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+/** Subscribe to AI usage/budget/key changes in storage. Returns an unsubscribe. */
+export function onAiDataChanged(cb: () => void): () => void {
+  const storage = (
+    globalThis as unknown as {
+      chrome?: {
+        storage?: {
+          onChanged?: {
+            addListener: (fn: (c: Record<string, unknown>, area: string) => void) => void;
+            removeListener: (fn: (c: Record<string, unknown>, area: string) => void) => void;
+          };
+        };
+      };
+    }
+  ).chrome?.storage?.onChanged;
+  if (!storage) return () => {};
+  const fn = (changes: Record<string, unknown>, area: string) => {
+    if (
+      area === "local" &&
+      ("aiUsage" in changes || "aiDailyBudget" in changes || "aiKey" in changes)
+    )
+      cb();
+  };
+  storage.addListener(fn);
+  return () => storage.removeListener(fn);
+}
+
 /** Today's token/cost usage (zeros if none yet or it's a new day). */
 export function loadAiUsage(): Promise<AiUsage> {
   return new Promise((resolve) => {

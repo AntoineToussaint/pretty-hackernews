@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import type { ThemeId } from "../lib/themes";
 import type { Source } from "../sources/types";
 import { ThemeSwitcher } from "./ThemeSwitcher";
+import { AiBudget } from "./AiBudget";
 
 type Props = {
   sources: Source[];
@@ -90,6 +91,8 @@ export function Header({
         )}
 
         {activeSource.AccountStatus && <activeSource.AccountStatus />}
+
+        <AiBudget onClick={onOpenSettings} />
 
         {showThemeSwitcher && (
           <ThemeSwitcher theme={theme} onChange={onThemeChange} />
