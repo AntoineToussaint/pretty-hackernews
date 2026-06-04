@@ -28,12 +28,21 @@ async function getText(path: string): Promise<string> {
  */
 export async function fetchAuthState(): Promise<AuthState> {
   if (!isExtension()) return { status: "anonymous" };
-  const html = await getText("/news");
-  // The "login?goto=" link is shown only when logged out; when logged in the
-  // top bar shows the username instead.
-  if (/login\?goto=/.test(html)) return { status: "anonymous" };
-  const user = html.match(/user\?id=([^"'&]+)/);
-  return { status: "logged-in", username: user ? user[1] : "you" };
+  // HN's own page is still in the DOM (we just hide it), and its top bar shows a
+  // definitive login/logout marker — so read state from there. No extra
+  // round-trip, and it reflects the page you're actually on.
+  if (document.querySelector('a[href^="logout"], a[href^="login?goto"]')) {
+    return authStateFromDOM();
+  }
+  // Fallback (DOM not ready / unusual page): a same-origin fetch.
+  try {
+    const html = await getText("/news");
+    if (/login\?goto=/.test(html)) return { status: "anonymous" };
+    const user = html.match(/user\?id=([^"'&]+)/);
+    return { status: "logged-in", username: user ? user[1] : "you" };
+  } catch {
+    return { status: "anonymous" };
+  }
 }
 
 /** Parse vote links (with auth tokens) out of an HN page's HTML. */

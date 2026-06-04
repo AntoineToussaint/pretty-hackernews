@@ -152,25 +152,31 @@ function buildPrompt(
   return { system, user };
 }
 
-function parseDigest(text: string): Digest | null {
+// Models often wrap JSON in prose or ```fences; grab the outermost object.
+function parseJsonObject(text: string): Record<string, unknown> | null {
   const m = text.match(/\{[\s\S]*\}/);
   if (!m) return null;
   try {
-    const d = JSON.parse(m[0]);
-    return {
-      verdict: String(d.verdict ?? ""),
-      worth: d.worth === "yes" || d.worth === "no" ? d.worth : "maybe",
-      picks: Array.isArray(d.picks)
-        ? d.picks.slice(0, 5).map((p: Record<string, unknown>) => ({
-            author: String(p.author ?? ""),
-            why: String(p.why ?? ""),
-            action: p.action === "reply" ? "reply" : "read",
-          }))
-        : [],
-    };
+    return JSON.parse(m[0]) as Record<string, unknown>;
   } catch {
     return null;
   }
+}
+
+function parseDigest(text: string): Digest | null {
+  const d = parseJsonObject(text);
+  if (!d) return null;
+  return {
+    verdict: String(d.verdict ?? ""),
+    worth: d.worth === "yes" || d.worth === "no" ? d.worth : "maybe",
+    picks: Array.isArray(d.picks)
+      ? d.picks.slice(0, 5).map((p: Record<string, unknown>) => ({
+          author: String(p.author ?? ""),
+          why: String(p.why ?? ""),
+          action: p.action === "reply" ? "reply" : "read",
+        }))
+      : [],
+  };
 }
 
 /** Propose interest tags from a free-text description (or pasted bio/LinkedIn). */
@@ -199,20 +205,15 @@ export async function suggestTags(
           : res.error || "AI request failed.",
     };
   }
-  const m = (res.text ?? "").match(/\{[\s\S]*\}/);
-  if (!m) return { ok: false, error: "Couldn't parse the AI response." };
-  try {
-    const d = JSON.parse(m[0]);
-    const tags = Array.isArray(d.tags)
-      ? d.tags
-          .map((t: unknown) => String(t).trim().toLowerCase())
-          .filter(Boolean)
-          .slice(0, 20)
-      : [];
-    return { ok: true, tags };
-  } catch {
-    return { ok: false, error: "Couldn't parse the AI response." };
-  }
+  const d = parseJsonObject(res.text ?? "");
+  if (!d) return { ok: false, error: "Couldn't parse the AI response." };
+  const tags = Array.isArray(d.tags)
+    ? d.tags
+        .map((t: unknown) => String(t).trim().toLowerCase())
+        .filter(Boolean)
+        .slice(0, 20)
+    : [];
+  return { ok: true, tags };
 }
 
 export async function digestStory(
