@@ -8,7 +8,10 @@ export type AiSettings = {
   model: string;
   profile: string;
   interests: string[];
+  dailyBudget: number; // USD/day; 0 = unlimited
 };
+
+const DEFAULT_DAILY_BUDGET = 0.5;
 
 const EMPTY_SETTINGS: AiSettings = {
   provider: "claude",
@@ -16,7 +19,39 @@ const EMPTY_SETTINGS: AiSettings = {
   model: "",
   profile: "",
   interests: [],
+  dailyBudget: DEFAULT_DAILY_BUDGET,
 };
+
+export type AiUsage = {
+  date: string;
+  requests: number;
+  input: number;
+  output: number;
+  cost: number;
+};
+
+function today(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/** Today's token/cost usage (zeros if none yet or it's a new day). */
+export function loadAiUsage(): Promise<AiUsage> {
+  return new Promise((resolve) => {
+    const empty: AiUsage = {
+      date: today(),
+      requests: 0,
+      input: 0,
+      output: 0,
+      cost: 0,
+    };
+    const local = chromeApi?.storage?.local;
+    if (!local) return resolve(empty);
+    local.get(["aiUsage"], (r) => {
+      const u = r.aiUsage as AiUsage | undefined;
+      resolve(u && u.date === empty.date ? u : empty);
+    });
+  });
+}
 
 /** Read the saved AI/profile settings from extension storage. */
 export function loadAiSettings(): Promise<AiSettings> {
@@ -24,7 +59,7 @@ export function loadAiSettings(): Promise<AiSettings> {
     const local = chromeApi?.storage?.local;
     if (!local) return resolve(EMPTY_SETTINGS);
     local.get(
-      ["aiProvider", "aiKey", "aiModel", "aiProfile", "aiInterests"],
+      ["aiProvider", "aiKey", "aiModel", "aiProfile", "aiInterests", "aiDailyBudget"],
       (r) =>
         resolve({
           provider: r.aiProvider === "openai" ? "openai" : "claude",
@@ -32,6 +67,10 @@ export function loadAiSettings(): Promise<AiSettings> {
           model: typeof r.aiModel === "string" ? r.aiModel : "",
           profile: typeof r.aiProfile === "string" ? r.aiProfile : "",
           interests: Array.isArray(r.aiInterests) ? (r.aiInterests as string[]) : [],
+          dailyBudget:
+            typeof r.aiDailyBudget === "number"
+              ? r.aiDailyBudget
+              : DEFAULT_DAILY_BUDGET,
         }),
     );
   });
@@ -49,6 +88,7 @@ export function saveAiSettings(s: AiSettings): Promise<void> {
         aiModel: s.model.trim() || DEFAULT_MODELS[s.provider],
         aiProfile: s.profile.trim(),
         aiInterests: s.interests,
+        aiDailyBudget: Number(s.dailyBudget) || 0,
       },
       () => resolve(),
     );
@@ -207,7 +247,9 @@ export async function suggestTags(
       error:
         res.error === "not-configured"
           ? "Save your API key first, then suggest tags."
-          : res.error || "AI request failed.",
+          : res.error === "daily-limit"
+            ? "You've hit today's AI budget. Raise it in Settings → AI & profile."
+            : res.error || "AI request failed.",
     };
   }
   const d = parseJsonObject(res.text ?? "");
@@ -240,7 +282,9 @@ export async function digestStory(
         error:
           res.error === "not-configured"
             ? "Add your API key in Settings (the gear, top-right)."
-            : res.error || "AI request failed.",
+            : res.error === "daily-limit"
+              ? "You've hit today's AI budget. Raise it in Settings → AI & profile."
+              : res.error || "AI request failed.",
       };
     }
     const text = res.text ?? "";

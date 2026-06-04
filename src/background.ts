@@ -1,4 +1,12 @@
-import { complete, type Provider } from "./lib/llm";
+import { complete, costFor, DEFAULT_MODELS, type Provider } from "./lib/llm";
+
+type AiUsage = {
+  date: string; // YYYY-MM-DD (local)
+  requests: number;
+  input: number;
+  output: number;
+  cost: number; // estimated USD
+};
 
 // Network-layer header rules, installed via declarativeNetRequest.
 const CSP_RULE_ID = 1;
@@ -96,24 +104,51 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
-  // Run an LLM completion using the stored config. The key stays here.
+  // Run an LLM completion using the stored config. The key stays here, and we
+  // track token usage / estimated cost against an optional daily budget.
   if (msg?.type === "hatch-llm") {
-    chrome.storage.local.get(["aiProvider", "aiKey", "aiModel"], (r) => {
-      if (!r.aiKey) {
-        sendResponse({ ok: false, error: "not-configured" });
-        return;
-      }
-      complete(
-        {
-          provider: (r.aiProvider as Provider) || "claude",
-          apiKey: r.aiKey as string,
-          model: (r.aiModel as string) || "",
-        },
-        msg.system,
-        msg.user,
-        msg.maxTokens || 1024,
-      ).then(sendResponse);
-    });
+    chrome.storage.local.get(
+      ["aiProvider", "aiKey", "aiModel", "aiDailyBudget", "aiUsage"],
+      (r) => {
+        if (!r.aiKey) {
+          sendResponse({ ok: false, error: "not-configured" });
+          return;
+        }
+        const provider = (r.aiProvider as Provider) || "claude";
+        const model = (r.aiModel as string) || DEFAULT_MODELS[provider];
+        const budget = Number(r.aiDailyBudget) || 0; // USD/day; 0 = unlimited
+        const today = new Date().toISOString().slice(0, 10);
+        const prev = r.aiUsage as AiUsage | undefined;
+        const usage: AiUsage =
+          prev && prev.date === today
+            ? prev
+            : { date: today, requests: 0, input: 0, output: 0, cost: 0 };
+
+        if (budget > 0 && usage.cost >= budget) {
+          sendResponse({ ok: false, error: "daily-limit" });
+          return;
+        }
+
+        complete(
+          { provider, apiKey: r.aiKey as string, model },
+          msg.system,
+          msg.user,
+          msg.maxTokens || 1024,
+        ).then((res) => {
+          if (res.ok && res.usage) {
+            const next: AiUsage = {
+              date: today,
+              requests: usage.requests + 1,
+              input: usage.input + res.usage.input,
+              output: usage.output + res.usage.output,
+              cost: usage.cost + costFor(model, res.usage),
+            };
+            chrome.storage.local.set({ aiUsage: next });
+          }
+          sendResponse(res);
+        });
+      },
+    );
     return true;
   }
 });

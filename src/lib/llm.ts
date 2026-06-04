@@ -10,13 +10,30 @@ export type LLMConfig = {
   model: string;
 };
 
-export type LLMResult = { ok: true; text: string } | { ok: false; error: string };
+export type LLMUsage = { input: number; output: number };
+export type LLMResult =
+  | { ok: true; text: string; usage?: LLMUsage }
+  | { ok: false; error: string };
 
 // Cheap-by-default for cost control — digests/tagging work well on small models.
 // Bump to a bigger model (e.g. claude-opus-4-8) in settings for deeper digests.
 export const DEFAULT_MODELS: Record<Provider, string> = {
   claude: "claude-haiku-4-5",
   openai: "gpt-4o-mini",
+};
+
+// Curated picks for the settings dropdown (first = the cheap default). Users can
+// still enter any model id via the "Custom…" option.
+export const MODEL_OPTIONS: Record<Provider, { id: string; label: string }[]> = {
+  claude: [
+    { id: "claude-haiku-4-5", label: "Haiku 4.5 — fast & cheap (default)" },
+    { id: "claude-sonnet-4-6", label: "Sonnet 4.6 — balanced" },
+    { id: "claude-opus-4-8", label: "Opus 4.8 — deepest, priciest" },
+  ],
+  openai: [
+    { id: "gpt-4o-mini", label: "GPT-4o mini — fast & cheap (default)" },
+    { id: "gpt-4o", label: "GPT-4o — balanced" },
+  ],
 };
 
 export async function complete(
@@ -56,7 +73,10 @@ export async function complete(
         .filter((b: { type?: string }) => b.type === "text")
         .map((b: { text?: string }) => b.text ?? "")
         .join("");
-      return { ok: true, text };
+      const usage = data.usage
+        ? { input: data.usage.input_tokens ?? 0, output: data.usage.output_tokens ?? 0 }
+        : undefined;
+      return { ok: true, text, usage };
     }
 
     // OpenAI
@@ -79,8 +99,30 @@ export async function complete(
       return { ok: false, error: `OpenAI ${res.status}: ${await res.text()}` };
     }
     const data = await res.json();
-    return { ok: true, text: data.choices?.[0]?.message?.content ?? "" };
+    const usage = data.usage
+      ? { input: data.usage.prompt_tokens ?? 0, output: data.usage.completion_tokens ?? 0 }
+      : undefined;
+    return { ok: true, text: data.choices?.[0]?.message?.content ?? "", usage };
   } catch (e) {
     return { ok: false, error: String(e) };
   }
+}
+
+// USD per 1M tokens (input / output). Used to estimate spend for the daily
+// budget and the usage readout. Unknown models fall back to a conservative
+// estimate so the budget still protects you.
+export const PRICING: Record<string, { in: number; out: number }> = {
+  "claude-opus-4-8": { in: 5, out: 25 },
+  "claude-opus-4-7": { in: 5, out: 25 },
+  "claude-opus-4-6": { in: 5, out: 25 },
+  "claude-sonnet-4-6": { in: 3, out: 15 },
+  "claude-haiku-4-5": { in: 1, out: 5 },
+  "gpt-4o-mini": { in: 0.15, out: 0.6 },
+  "gpt-4o": { in: 2.5, out: 10 },
+};
+
+/** Estimated USD cost of one call, from the model and its token usage. */
+export function costFor(model: string, usage: LLMUsage): number {
+  const p = PRICING[model] ?? { in: 3, out: 15 };
+  return (usage.input / 1e6) * p.in + (usage.output / 1e6) * p.out;
 }

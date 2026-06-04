@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
-import { DEFAULT_MODELS, type Provider } from "../lib/llm";
+import { DEFAULT_MODELS, MODEL_OPTIONS, type Provider } from "../lib/llm";
 import {
   loadAiSettings,
+  loadAiUsage,
   saveAiSettings,
   suggestTags,
+  type AiSettings,
+  type AiUsage,
 } from "../sources/hn/aiDigest";
 
 const inputCls =
@@ -20,6 +23,8 @@ export function AiProfileForm() {
   const [provider, setProvider] = useState<Provider>("claude");
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState("");
+  const [customModel, setCustomModel] = useState(false);
+  const [dailyBudget, setDailyBudget] = useState(0.5);
   const [profile, setProfile] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
@@ -27,23 +32,30 @@ export function AiProfileForm() {
   const [suggesting, setSuggesting] = useState(false);
   const [suggested, setSuggested] = useState<string[]>([]);
   const [suggestErr, setSuggestErr] = useState("");
+  const [usage, setUsage] = useState<AiUsage | null>(null);
 
   useEffect(() => {
     loadAiSettings().then((s) => {
       setProvider(s.provider);
       setApiKey(s.apiKey);
       setModel(s.model);
+      setCustomModel(
+        !!s.model && !MODEL_OPTIONS[s.provider].some((o) => o.id === s.model),
+      );
+      setDailyBudget(s.dailyBudget);
       setProfile(s.profile);
       setTags(s.interests);
     });
+    loadAiUsage().then(setUsage);
   }, []);
 
-  const current = (): import("../sources/hn/aiDigest").AiSettings => ({
+  const current = (): AiSettings => ({
     provider,
     apiKey,
     model,
     profile,
     interests: tags,
+    dailyBudget,
   });
 
   const addTag = (t: string) => {
@@ -87,7 +99,11 @@ export function AiProfileForm() {
             <button
               key={p}
               type="button"
-              onClick={() => setProvider(p)}
+              onClick={() => {
+                setProvider(p);
+                setModel(""); // fall back to the new provider's default
+                setCustomModel(false);
+              }}
               className={
                 "flex-1 rounded-lg py-2 text-sm font-semibold transition " +
                 (active
@@ -111,16 +127,60 @@ export function AiProfileForm() {
       />
 
       <label className={labelCls}>Model</label>
+      <select
+        className={inputCls}
+        value={customModel ? "__custom__" : model || MODEL_OPTIONS[provider][0].id}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === "__custom__") {
+            setCustomModel(true);
+            setModel("");
+          } else {
+            setCustomModel(false);
+            setModel(v);
+          }
+        }}
+      >
+        {MODEL_OPTIONS[provider].map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.label}
+          </option>
+        ))}
+        <option value="__custom__">Custom…</option>
+      </select>
+      {customModel && (
+        <input
+          className={inputCls + " mt-2"}
+          type="text"
+          value={model}
+          onChange={(e) => setModel(e.target.value)}
+          placeholder={`model id, e.g. ${DEFAULT_MODELS[provider]}`}
+        />
+      )}
+
+      <label className={labelCls}>Daily budget (USD)</label>
       <input
         className={inputCls}
-        type="text"
-        value={model}
-        onChange={(e) => setModel(e.target.value)}
-        placeholder={DEFAULT_MODELS[provider]}
+        type="number"
+        min={0}
+        step={0.1}
+        value={dailyBudget}
+        onChange={(e) => setDailyBudget(Number(e.target.value))}
       />
       <p className="mt-1.5 text-xs text-[color:var(--color-fg-muted)]">
-        Leave blank for the default ({DEFAULT_MODELS[provider]} — cheap). Bump to
-        claude-opus-4-8 for deeper digests.
+        AI pauses for the day once estimated spend reaches this. Set 0 for no
+        limit. Costs are estimates from each call's token usage.
+        {usage && (
+          <>
+            {" "}
+            <span className="text-[color:var(--color-fg)]">
+              Today: {usage.requests} request{usage.requests === 1 ? "" : "s"},{" "}
+              {usage.input.toLocaleString()} in / {usage.output.toLocaleString()} out
+              tokens · ~${usage.cost.toFixed(4)}
+              {dailyBudget > 0 ? ` of $${dailyBudget.toFixed(2)}` : ""}.
+            </span>
+          </>
+        )}
       </p>
 
       <label className={labelCls}>About you</label>
