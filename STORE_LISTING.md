@@ -43,8 +43,8 @@ Not affiliated with Y Combinator.
 - storage: to save your theme, seen-stories, bookmarks, muted domains, and
   default feed locally on your device.
 - declarativeNetRequest: to remove HN's Content-Security-Policy on HN's own
-  pages so the reader can display site icons, the Inter font, and article
-  preview images. No network requests are blocked or redirected. (It also strips
+  pages so the reader can display its bundled font and article preview images.
+  No network requests are blocked or redirected. (Site icons are drawn locally.) (It also strips
   the Origin header on the extension's own calls to api.anthropic.com so keys on
   zero-data-retention orgs work — scoped to the extension's requests, never
   other sites'.)
@@ -61,10 +61,10 @@ Not affiliated with Y Combinator.
 - Network calls, in full: news.ycombinator.com (the feed/comments and, when you
   choose, voting/commenting with your existing login); Hacker News's own public
   data APIs hacker-news.firebaseio.com and hn.algolia.com (anonymous reads);
-  fonts.googleapis.com for the Inter font (site icons are drawn locally, no
-  favicon requests); the page you click "Preview" on (only if previews are
-  enabled); and api.anthropic.com / api.openai.com (only if you enable AI and
-  trigger it, called directly with your key).
+  the page you click "Preview" on (only if previews are enabled); and
+  api.anthropic.com / api.openai.com (only if you enable AI and trigger it,
+  called directly with your key). The Inter font is bundled and site icons are
+  local, so there are no third-party font or favicon requests.
 - AI is opt-in and used only to summarize/match for reading — never to write
   comments or vote. See the LICENSE covenant.
 - Full source and the complete network list: see the privacy policy + repo.

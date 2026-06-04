@@ -1,7 +1,8 @@
 # Launch assets — demo + Show HN
 
 Recording tools: **Screen Studio** for the hero clip (auto-zoom on clicks),
-**CleanShot X** for the five static store screenshots. Capture at 1280×800 (or
+**CleanShot X** for up to five static store screenshots (2 captured so far in
+store-assets/). Capture at 1280×800 (or
 2560×1600 retina → downscale). Clean bookmarks bar; blur or use a throwaway HN
 username.
 
@@ -23,7 +24,7 @@ Looping GIF for HN/Twitter: loop **0:05–0:13** (the theme morph). Keep < ~5MB.
 
 1. Dense feed — "Real Hacker News — calmer. Classic density by default."
 2. Story + comments — "Threaded comments, collapse, jump around — keyboard-first."
-3. Settings modal (themes open) — "Make it yours: a dozen themes, from faithful Classic to Bloomberg."
+3. Settings modal (themes open) — "Make it yours: 13 themes, from faithful Classic to Bloomberg."
 4. Inline preview — "Read the linked article inline. Never leave HN."
 5. AI digest — "Optional, bring-your-own-key AI: triages a thread for you. Reading only — never posts."
 
@@ -63,7 +64,8 @@ On trust, since this touches a site you care about:
   summarize a thread, match stories to your interests. It will never write
   comments or vote for you; that's a covenant in the LICENSE.
 
-It's MIT-licensed and the source is here: [repo link]. It's a Chrome MV3
+It's MIT-licensed and the source is here:
+https://github.com/AntoineToussaint/pretty-hackernews. It's a Chrome MV3
 extension (load unpacked for now; Web Store review pending).
 
 Would love feedback — especially from people who, like me, don't want HN to stop

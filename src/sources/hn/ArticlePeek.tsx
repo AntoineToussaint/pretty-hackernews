@@ -1,5 +1,25 @@
 import { useEffect, useRef, useState } from "react";
 import { hasPreviewPermission, loadArticle, type Article } from "./article";
+import {
+  aiConfigured,
+  summarizeArticle,
+  type ArticleSummary,
+} from "./aiDigest";
+
+type SummaryState =
+  | { s: "idle" }
+  | { s: "loading" }
+  | { s: "error"; msg: string }
+  | { s: "ready"; data: ArticleSummary };
+
+function MiniSpinner() {
+  return (
+    <svg viewBox="0 0 24 24" className="size-4 animate-spin" fill="none" aria-hidden="true">
+      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="3" className="opacity-25" />
+      <path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 type State =
   | { status: "loading" }
@@ -18,7 +38,19 @@ export function ArticlePeek({
   const [state, setState] = useState<State>({ status: "loading" });
   const [full, setFull] = useState(false);
   const [imgOk, setImgOk] = useState(true);
+  const [aiOn, setAiOn] = useState(false);
+  const [summary, setSummary] = useState<SummaryState>({ s: "idle" });
   const contentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    aiConfigured().then(setAiOn);
+  }, []);
+
+  const runSummary = async (article: Article) => {
+    setSummary({ s: "loading" });
+    const res = await summarizeArticle(article.title ?? "", article.html);
+    setSummary(res.ok ? { s: "ready", data: res.summary } : { s: "error", msg: res.error });
+  };
   const wrap =
     variant === "card"
       ? "card p-4 sm:p-5"
@@ -50,6 +82,7 @@ export function ArticlePeek({
     setState({ status: "loading" });
     setFull(false);
     setImgOk(true);
+    setSummary({ s: "idle" });
     hasPreviewPermission().then((granted) => {
       if (cancelled) return;
       if (!granted) {
@@ -110,6 +143,58 @@ export function ArticlePeek({
   const { article } = state;
   return (
     <div className={wrap}>
+      {aiOn && (
+        <div className="mb-3">
+          {summary.s === "idle" && (
+            <button
+              type="button"
+              onClick={() => runSummary(article)}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-[color:var(--color-fg)] ring-1 ring-[color:var(--color-border)] transition hover:bg-[color:var(--color-bg-elev)]"
+            >
+              ✨ Summarize article
+            </button>
+          )}
+          {summary.s === "loading" && (
+            <div className="flex items-center gap-2 text-sm text-[color:var(--color-fg-muted)]">
+              <span className="text-[color:var(--color-accent)]">
+                <MiniSpinner />
+              </span>
+              Summarizing…
+            </div>
+          )}
+          {summary.s === "error" && (
+            <div className="text-xs text-[color:var(--color-fg-muted)]">
+              {summary.msg}{" "}
+              <button
+                type="button"
+                onClick={() => runSummary(article)}
+                className="text-[color:var(--color-accent)] hover:underline"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          {summary.s === "ready" && (
+            <div className="rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-bg-elev)]/50 p-3">
+              <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-[color:var(--color-fg-muted)]">
+                ✨ Summary
+              </div>
+              {summary.data.thesis && (
+                <p className="text-sm font-medium leading-relaxed">
+                  {summary.data.thesis}
+                </p>
+              )}
+              {summary.data.bullets.length > 0 && (
+                <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-[color:var(--color-fg-muted)]">
+                  {summary.data.bullets.map((b, i) => (
+                    <li key={i}>{b}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+        </div>
+      )}
       {article.image && imgOk && (
         <img
           src={article.image}

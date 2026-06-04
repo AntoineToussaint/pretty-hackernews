@@ -99,9 +99,10 @@ that needs the extension's same-origin session). It also serves
   comment-form `hmac` tokens are read from HN's DOM / fetched same-origin
   (`src/sources/hn/auth.ts`). No CORS, no credentials handled by the extension.
 - **Background worker** (`src/background.ts`) strips HN's `Content-Security-Policy`
-  on HN pages (via `declarativeNetRequest`) so favicons, the Inter font, and
-  preview images can load — and fetches article HTML for previews (cross-origin
-  fetches must run in the worker under MV3).
+  on the pages we render (via `declarativeNetRequest`) so the bundled Inter font
+  and article preview images can load — and fetches article HTML for previews
+  (cross-origin fetches must run in the worker under MV3). Site icons are local
+  monogram tiles (no favicon requests).
 - **Inline previews** (`src/sources/hn/article.ts`, `ArticlePeek.tsx`) fetch the
   linked page, extract it with Readability, sanitize with DOMPurify, and render
   it inline. The broad host permission is **optional** and requested just-in-time
@@ -131,6 +132,7 @@ src/
       auth.ts           # vote / comment / reply via the user's session
       article.ts        # fetch + Readability + DOMPurify for previews
       Feed.tsx Story.tsx StoryCard.tsx Comment.tsx ArticlePeek.tsx CommentBox.tsx
+      Digest.tsx SiteIcon.tsx   # AI digest/summary UI; local monogram icons
       voteContext / seenContext / prefsContext  # state, persisted to chrome.storage
   lib/
     themes.ts format.ts runtime.ts
@@ -143,9 +145,9 @@ src/
 - **api.anthropic.com / api.openai.com** — used only if you enable AI and
   trigger it, to call the provider you chose with your own key.
 - **storage** — save preferences (and, if you use AI, your key) locally.
-- **declarativeNetRequest** — relax HN's CSP on HN's pages so the Inter font and
-  preview images load (no requests blocked or redirected; site icons are drawn
-  locally). Also strips the `Origin`
+- **declarativeNetRequest** — relax HN's CSP on the pages we render so the
+  bundled font and preview images load (no requests blocked or redirected; site
+  icons are drawn locally). Also strips the `Origin`
   header on the extension's *own* calls to api.anthropic.com (scoped via
   `tabIds:[-1]`) so keys on zero-data-retention orgs work — never touches other
   sites' requests.

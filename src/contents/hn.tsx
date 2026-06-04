@@ -1,5 +1,6 @@
 import type { PlasmoCSConfig } from "plasmo";
 import cssText from "data-text:../compiled.css";
+import interFontUrl from "url:../../assets/InterVariable.woff2";
 import { useEffect, useRef, useState } from "react";
 
 import { Header } from "../components/Header";
@@ -82,16 +83,16 @@ export default function HNReader() {
 
   const active = route !== null;
 
-  // Load Inter (works now that the background strips HN's CSP). The font lives
-  // in the page document so it's available to our shadow content.
+  // Inter is bundled in the extension (no third-party font host). We inject the
+  // @font-face into the page document so it's available to our shadow content;
+  // interFontUrl is a chrome-extension:// URL Plasmo exposes as a
+  // web_accessible_resource. CSP on HN is stripped so the font can load.
   useEffect(() => {
     if (document.getElementById("hatch-font")) return;
-    const link = document.createElement("link");
-    link.id = "hatch-font";
-    link.rel = "stylesheet";
-    link.href =
-      "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
-    document.head.appendChild(link);
+    const style = document.createElement("style");
+    style.id = "hatch-font";
+    style.textContent = `@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("${interFontUrl}") format("woff2");}`;
+    document.head.appendChild(style);
   }, []);
 
   useEffect(() => {
@@ -105,8 +106,10 @@ export default function HNReader() {
   }, [theme]);
 
   // Console inspector — lets you poke at state and flip on verbose logging from
-  // the page's DevTools console without a rebuild. See src/lib/debug.ts.
+  // the page's DevTools console without a rebuild. Only on pages we actually
+  // skin, so non-reader HN pages keep a clean console. See src/lib/debug.ts.
   useEffect(() => {
+    if (!active) return;
     const g = globalThis as unknown as { hatch?: unknown };
     g.hatch = {
       debug: (on = true) => setDebug(on),
@@ -122,7 +125,7 @@ export default function HNReader() {
     return () => {
       delete (g as { hatch?: unknown }).hatch;
     };
-  }, []);
+  }, [active]);
 
   // Default feed: redirect the bare homepage ("/") to the preferred feed.
   useEffect(() => {
@@ -232,10 +235,7 @@ export default function HNReader() {
         feedId={route.kind === "feed" ? route.feedId : null}
         onFeedChange={(f) => navigate(FEED_TO_PATH[f] ?? "/news")}
         onOpenItem={openItem}
-        theme={theme}
-        onThemeChange={setTheme}
         showSearch={false}
-        showThemeSwitcher={false}
         showSettings={true}
         onOpenSettings={() => setSettingsOpen(true)}
         onToggleSaved={() => setSavedOpen((v) => !v)}

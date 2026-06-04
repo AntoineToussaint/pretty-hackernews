@@ -3,6 +3,7 @@ import { DEFAULT_MODELS, MODEL_OPTIONS, type Provider } from "../lib/llm";
 import {
   loadAiSettings,
   loadAiUsage,
+  onAiDataChanged,
   saveAiSettings,
   suggestTags,
   type AiSettings,
@@ -46,7 +47,13 @@ export function AiProfileForm() {
       setProfile(s.profile);
       setTags(s.interests);
     });
-    loadAiUsage().then(setUsage);
+  }, []);
+
+  // Keep the "today's usage" line live as digests/summaries run.
+  useEffect(() => {
+    const refresh = () => loadAiUsage().then(setUsage);
+    refresh();
+    return onAiDataChanged(refresh);
   }, []);
 
   const current = (): AiSettings => ({

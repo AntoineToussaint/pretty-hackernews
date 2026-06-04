@@ -1,4 +1,10 @@
-import { complete, costFor, DEFAULT_MODELS, type Provider } from "./lib/llm";
+import {
+  complete,
+  costFor,
+  DEFAULT_MODELS,
+  type LLMResult,
+  type Provider,
+} from "./lib/llm";
 
 type AiUsage = {
   date: string; // YYYY-MM-DD (local)
@@ -14,10 +20,10 @@ const ANTHROPIC_ORIGIN_RULE_ID = 2;
 
 async function installRules() {
   try {
-    // Dynamic rule: strip HN's Content-Security-Policy on its own pages so our
-    // in-place reader can load external images (favicons, article hero images)
-    // and the Inter font — all of which HN's `img-src 'self'` would block. This
-    // necessarily targets HN's top-level navigation (a real tab request).
+    // Dynamic rule: strip HN's Content-Security-Policy on the pages we skin so
+    // our reader can load its bundled font (a chrome-extension: URL) and article
+    // preview images — both of which HN's `font-src/img-src 'self'` would block.
+    // This necessarily targets HN's top-level navigation (a real tab request).
     await chrome.declarativeNetRequest.updateDynamicRules({
       removeRuleIds: [CSP_RULE_ID, ANTHROPIC_ORIGIN_RULE_ID],
       addRules: [
@@ -32,7 +38,10 @@ async function installRules() {
             ],
           },
           condition: {
-            urlFilter: "||news.ycombinator.com",
+            // Only the pages our reader actually renders — NOT /login, /submit,
+            // /user, /reply etc., so HN keeps its CSP where we don't skin.
+            regexFilter:
+              "^https://news\\.ycombinator\\.com/(?:$|\\?|news|newest|best|ask|show|jobs|item)",
             resourceTypes: ["main_frame", "sub_frame"],
           },
         },
@@ -104,54 +113,74 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
-  // Run an LLM completion using the stored config. The key stays here, and we
-  // track token usage / estimated cost against an optional daily budget.
+  // Run an LLM completion using the stored config. Serialized through a queue so
+  // the read-check-write of daily usage is atomic (no lost updates / overspend
+  // when two requests fire at once). The key stays in this worker.
   if (msg?.type === "hatch-llm") {
-    chrome.storage.local.get(
-      ["aiProvider", "aiKey", "aiModel", "aiDailyBudget", "aiUsage"],
-      (r) => {
-        if (!r.aiKey) {
-          sendResponse({ ok: false, error: "not-configured" });
-          return;
-        }
-        const provider = (r.aiProvider as Provider) || "claude";
-        const model = (r.aiModel as string) || DEFAULT_MODELS[provider];
-        const budget = Number(r.aiDailyBudget) || 0; // USD/day; 0 = unlimited
-        const today = new Date().toISOString().slice(0, 10);
-        const prev = r.aiUsage as AiUsage | undefined;
-        const usage: AiUsage =
-          prev && prev.date === today
-            ? prev
-            : { date: today, requests: 0, input: 0, output: 0, cost: 0 };
-
-        if (budget > 0 && usage.cost >= budget) {
-          sendResponse({ ok: false, error: "daily-limit" });
-          return;
-        }
-
-        complete(
-          { provider, apiKey: r.aiKey as string, model },
-          msg.system,
-          msg.user,
-          msg.maxTokens || 1024,
-        ).then((res) => {
-          if (res.ok && res.usage) {
-            const next: AiUsage = {
-              date: today,
-              requests: usage.requests + 1,
-              input: usage.input + res.usage.input,
-              output: usage.output + res.usage.output,
-              cost: usage.cost + costFor(model, res.usage),
-            };
-            chrome.storage.local.set({ aiUsage: next });
-          }
-          sendResponse(res);
-        });
-      },
-    );
+    const job = aiQueue.then(() => runLlm(msg));
+    aiQueue = job.catch(() => {});
+    job.then(sendResponse, (e) => sendResponse({ ok: false, error: String(e) }));
     return true;
   }
 });
+
+const getLocal = (keys: string[]) =>
+  new Promise<Record<string, unknown>>((r) => chrome.storage.local.get(keys, r));
+const setLocal = (items: Record<string, unknown>) =>
+  new Promise<void>((r) => chrome.storage.local.set(items, () => r()));
+
+// Serializes AI calls so usage accounting can't race.
+let aiQueue: Promise<unknown> = Promise.resolve();
+
+async function runLlm(msg: {
+  system: string;
+  user: string;
+  maxTokens?: number;
+}): Promise<LLMResult> {
+  const cfg = await getLocal([
+    "aiProvider",
+    "aiKey",
+    "aiModel",
+    "aiDailyBudget",
+    "aiUsage",
+  ]);
+  if (!cfg.aiKey) return { ok: false, error: "not-configured" };
+
+  const provider = (cfg.aiProvider as Provider) || "claude";
+  const model = (cfg.aiModel as string) || DEFAULT_MODELS[provider];
+  const budget = Number(cfg.aiDailyBudget) || 0; // USD/day; 0 = unlimited
+  const today = new Date().toISOString().slice(0, 10);
+  const prev = cfg.aiUsage as AiUsage | undefined;
+  const usage: AiUsage =
+    prev && prev.date === today
+      ? prev
+      : { date: today, requests: 0, input: 0, output: 0, cost: 0 };
+
+  if (budget > 0 && usage.cost >= budget) return { ok: false, error: "daily-limit" };
+
+  const res = await complete(
+    { provider, apiKey: cfg.aiKey as string, model },
+    msg.system,
+    msg.user,
+    msg.maxTokens || 1024,
+  );
+
+  // Count every successful call (even if the provider omitted a usage block);
+  // add estimated cost only when usage is reported.
+  if (res.ok) {
+    const u = res.usage ?? { input: 0, output: 0 };
+    await setLocal({
+      aiUsage: {
+        date: today,
+        requests: usage.requests + 1,
+        input: usage.input + u.input,
+        output: usage.output + u.output,
+        cost: usage.cost + (res.usage ? costFor(model, res.usage) : 0),
+      } satisfies AiUsage,
+    });
+  }
+  return res;
+}
 
 chrome.runtime.onInstalled.addListener(installRules);
 chrome.runtime.onStartup.addListener(installRules);

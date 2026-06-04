@@ -69,7 +69,6 @@ test("makes no network calls outside the documented allowlist", () => {
     "news.ycombinator.com", // HN itself — feed/comments + your own HN login
     "hacker-news.firebaseio.com", // HN's official public API (anonymous reads)
     "hn.algolia.com", // HN's official search/data API (anonymous reads)
-    "fonts.googleapis.com", // the Inter web font
     "api.anthropic.com", // opt-in AI: your key, only when you trigger it
     "api.openai.com", // opt-in AI: your key, only when you trigger it
     "github.com", // footer link in the web app — not a data call
@@ -77,8 +76,10 @@ test("makes no network calls outside the documented allowlist", () => {
   ]);
   const offenders = new Set<string>();
   for (const [, src] of files) {
-    for (const m of src.matchAll(/https?:\/\/([a-z0-9.-]+)/gi)) {
-      const host = m[1].toLowerCase();
+    // Strip backslashes first so regex-escaped hosts in declarativeNetRequest
+    // rules (e.g. news\.ycombinator\.com) read as the real host, not "news".
+    for (const m of src.replace(/\\/g, "").matchAll(/https?:\/\/([a-z0-9.-]+)/gi)) {
+      const host = m[1].toLowerCase().replace(/\.+$/, "");
       if (!ALLOWED.has(host)) offenders.add(host);
     }
   }

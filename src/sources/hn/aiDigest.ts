@@ -328,3 +328,54 @@ export async function digestStory(
     return { ok: false, error: String(e) };
   }
 }
+
+export type ArticleSummary = { thesis: string; bullets: string[] };
+
+/**
+ * Summarize an already-extracted article (the Readability HTML we render for the
+ * preview) into a thesis + key bullets. Reuses the extracted content — no extra
+ * fetch — and respects the same budget/limit path as the digest.
+ */
+export async function summarizeArticle(
+  title: string,
+  html: string,
+): Promise<{ ok: true; summary: ArticleSummary } | { ok: false; error: string }> {
+  const text = strip(html);
+  if (!text.trim())
+    return { ok: false, error: "No readable article text to summarize." };
+  try {
+    const { interests } = await getProfile();
+    const system =
+      "You summarize a web article for a busy Hacker News reader. " +
+      (interests.length ? `The reader cares about: ${interests.join(", ")}. ` : "") +
+      'Respond with ONLY minified JSON, no markdown: {"thesis": "<=1 sentence core claim", "bullets": ["3-6 short key points, most important first"]}. ' +
+      "Be concrete and faithful to the article; no fluff or preamble.";
+    const user = `TITLE: ${title}\n\nARTICLE:\n${text.slice(0, 8000)}`;
+    const res = await send<{ ok: boolean; text?: string; error?: string }>({
+      type: "hatch-llm",
+      system,
+      user,
+      maxTokens: 700,
+    });
+    if (!res) return { ok: false, error: "No response from the extension." };
+    if (!res.ok) {
+      return {
+        ok: false,
+        error:
+          res.error === "not-configured"
+            ? "Add your API key in Settings (the gear, top-right)."
+            : res.error === "daily-limit"
+              ? "You've hit today's AI budget. Raise it in Settings → AI & profile."
+              : res.error || "AI request failed.",
+      };
+    }
+    const d = parseJsonObject(res.text ?? "");
+    if (!d) return { ok: false, error: "Couldn't parse the AI response." };
+    const bullets = Array.isArray(d.bullets)
+      ? d.bullets.map((b: unknown) => String(b).trim()).filter(Boolean).slice(0, 6)
+      : [];
+    return { ok: true, summary: { thesis: String(d.thesis ?? ""), bullets } };
+  } catch (e) {
+    return { ok: false, error: String(e) };
+  }
+}

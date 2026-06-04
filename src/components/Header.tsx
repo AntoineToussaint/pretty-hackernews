@@ -1,7 +1,5 @@
 import { useRef, useState } from "react";
-import type { ThemeId } from "../lib/themes";
 import type { Source } from "../sources/types";
-import { ThemeSwitcher } from "./ThemeSwitcher";
 import { AiBudget } from "./AiBudget";
 
 type Props = {
@@ -12,12 +10,8 @@ type Props = {
   feedId: string | null;
   onFeedChange: (feedId: string) => void;
   onOpenItem: (id: string) => void;
-  theme: ThemeId;
-  onThemeChange: (theme: ThemeId) => void;
   /** Show the paste-a-link box (web app); off for the in-place reader. */
   showSearch?: boolean;
-  /** Show the inline theme dropdown (web app); off for the in-place reader. */
-  showThemeSwitcher?: boolean;
   /** Show the settings gear. */
   showSettings?: boolean;
   /** If provided, the gear is a button calling this; else it links to #/settings. */
@@ -34,10 +28,7 @@ export function Header({
   feedId,
   onFeedChange,
   onOpenItem,
-  theme,
-  onThemeChange,
   showSearch = true,
-  showThemeSwitcher = true,
   showSettings = true,
   onOpenSettings,
   onToggleSaved,
@@ -93,10 +84,6 @@ export function Header({
         {activeSource.AccountStatus && <activeSource.AccountStatus />}
 
         <AiBudget onClick={onOpenSettings} />
-
-        {showThemeSwitcher && (
-          <ThemeSwitcher theme={theme} onChange={onThemeChange} />
-        )}
 
         {onToggleSaved && (
           <button

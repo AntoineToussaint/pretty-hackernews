@@ -83,9 +83,6 @@ export function App() {
         feedId={route.kind === "list" ? route.feedId : null}
         onFeedChange={(feedId) => setHash(listHash(source.id, feedId))}
         onOpenItem={(id) => setHash(itemHash(source.id, id))}
-        theme={theme}
-        onThemeChange={setTheme}
-        showThemeSwitcher={false}
         onOpenSettings={() => setSettingsOpen(true)}
       />
       {settingsOpen && (

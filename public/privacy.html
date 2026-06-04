@@ -44,7 +44,8 @@
     <p>
       Your preferences and state — theme, read/seen stories, bookmarks, muted
       domains, default feed, and (if you use AI) your API key, profile text,
-      interest tags, and local token-usage counts — are stored only in your
+      interest tags, and local token-usage counts and estimated daily spend —
+      are stored only in your
       browser via
       <code>chrome.storage.local</code>. They never leave your device except as
       described below.
@@ -67,9 +68,10 @@
         threads as structured data.
       </li>
       <li>
-        <strong>fonts.googleapis.com</strong> — to load the reader's font
-        (Inter) from Google Fonts. Site icons are drawn locally as coloured
-        letter tiles, so Hatch makes <em>no</em> per-domain favicon requests.
+        <strong>No third-party font or icon hosts.</strong> The reader's font
+        (Inter) is bundled inside the extension, and site icons are drawn locally
+        as coloured letter tiles — so Hatch contacts no Google (or other) font
+        or favicon service at all.
       </li>
       <li>
         <strong>Article previews (optional, off by default)</strong> — only if
@@ -116,7 +118,7 @@
       <li><strong>news.ycombinator.com access</strong> — to render the reader and act on your behalf when you vote/comment.</li>
       <li><strong>api.anthropic.com / api.openai.com access</strong> — used only when you turn on AI and trigger it, to call the provider you chose with your key.</li>
       <li><strong>storage</strong> — to save your preferences and (if you use AI) your key locally.</li>
-      <li><strong>declarativeNetRequest</strong> — to relax HN's content-security-policy on HN's own pages so site icons, fonts, and preview images can load. No requests are blocked or redirected. (It also strips the Origin header on Hatch's own calls to api.anthropic.com so keys on zero-data-retention orgs work; this is scoped to Hatch's own requests and never affects other sites.)</li>
+      <li><strong>declarativeNetRequest</strong> — to relax HN's content-security-policy on the pages Hatch renders so its bundled font and article preview images can load. No requests are blocked or redirected. (It also strips the Origin header on Hatch's own calls to api.anthropic.com so keys on zero-data-retention orgs work; this is scoped to Hatch's own requests and never affects other sites.)</li>
       <li><strong>Broad site access (optional)</strong> — requested only if you turn on Article previews; used solely to fetch a page you click Preview on.</li>
     </ul>
 

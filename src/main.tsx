@@ -1,7 +1,13 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import interFontUrl from "../assets/InterVariable.woff2?url";
 import "./index.css";
 import { App } from "./App.tsx";
+
+// Inter is bundled (no third-party font host), injected as @font-face.
+const fontStyle = document.createElement("style");
+fontStyle.textContent = `@font-face{font-family:"Inter";font-style:normal;font-weight:100 900;font-display:swap;src:url("${interFontUrl}") format("woff2");}`;
+document.head.appendChild(fontStyle);
 
 // Apply the saved theme before first render. This used to be an inline script in
 // index.html, but extension pages block inline scripts (MV3 CSP), so it lives in
@@ -31,16 +37,6 @@ try {
 } catch {
   /* localStorage unavailable — fall back to the default theme */
 }
-
-console.info(
-  "[hatch] boot — theme:",
-  document.documentElement.className,
-  "| extension:",
-  Boolean(
-    (globalThis as unknown as { chrome?: { runtime?: { id?: string } } }).chrome
-      ?.runtime?.id,
-  ),
-);
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
