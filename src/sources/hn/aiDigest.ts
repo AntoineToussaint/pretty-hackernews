@@ -56,6 +56,7 @@ export function saveAiSettings(s: AiSettings): Promise<void> {
 }
 
 export type DigestPick = {
+  id?: number; // HN comment id, so we can link straight to it
   author: string;
   why: string;
   action: "read" | "reply";
@@ -123,7 +124,8 @@ const strip = (html: string) =>
 function flatten(nodes: CommentNode[], out: string[], cap: number) {
   for (const n of nodes) {
     if (out.length >= cap) return;
-    if (n.author && n.text) out.push(`${n.author}: ${strip(n.text).slice(0, 400)}`);
+    if (n.author && n.text)
+      out.push(`[#${n.id}] ${n.author}: ${strip(n.text).slice(0, 400)}`);
     flatten(n.children, out, cap);
   }
 }
@@ -138,7 +140,9 @@ function buildPrompt(
     `Reader profile: ${profile || "(none given)"}. ` +
     `Stated interests: ${interests.join(", ") || "(none given)"}. ` +
     "Given a post and its comments, judge whether it's worth THIS reader's time and pick the few most valuable comments for them to read, plus any they're well-placed to reply to. " +
-    'Respond with ONLY minified JSON, no markdown fences: {"verdict": "<=1 sentence", "worth": "yes"|"maybe"|"no", "picks": [{"author": string, "why": "<=1 sentence", "action": "read"|"reply"}]}. ' +
+    "Each comment is prefixed with its id like [#12345]. " +
+    'Respond with ONLY minified JSON, no markdown fences: {"verdict": "<=1 sentence", "worth": "yes"|"maybe"|"no", "picks": [{"id": number, "author": string, "why": "<=1 sentence", "action": "read"|"reply"}]}. ' +
+    "The id MUST be the exact number from the [#...] prefix of the comment you picked. " +
     "Pick at most 5. If no comments are worth it, return an empty picks array.";
 
   const comments: string[] = [];
@@ -171,6 +175,7 @@ function parseDigest(text: string): Digest | null {
     worth: d.worth === "yes" || d.worth === "no" ? d.worth : "maybe",
     picks: Array.isArray(d.picks)
       ? d.picks.slice(0, 5).map((p: Record<string, unknown>) => ({
+          id: Number(p.id) || undefined,
           author: String(p.author ?? ""),
           why: String(p.why ?? ""),
           action: p.action === "reply" ? "reply" : "read",

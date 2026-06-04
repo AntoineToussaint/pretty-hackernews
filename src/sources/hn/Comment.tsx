@@ -49,6 +49,8 @@ export function Comment({
 
   return (
     <div
+      data-comment-id={node.id}
+      data-author={node.author ?? ""}
       className={
         depth === 0
           ? "card p-4 sm:p-5"

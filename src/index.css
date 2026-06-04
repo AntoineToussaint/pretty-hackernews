@@ -407,3 +407,18 @@
     transform: translateX(4px);
   }
 }
+
+/* Flash a comment when you jump to it from the AI digest. */
+.hatch-flash {
+  animation: hatch-flash 1.6s ease-out;
+}
+@keyframes hatch-flash {
+  0% {
+    box-shadow: 0 0 0 2px var(--color-accent);
+    background-color: color-mix(in oklab, var(--color-accent) 20%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+    background-color: transparent;
+  }
+}

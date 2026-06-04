@@ -1,6 +1,26 @@
 import { useEffect, useRef, useState } from "react";
 import type { StoryItem } from "./api";
-import { aiConfigured, digestStory, type Digest as DigestData } from "./aiDigest";
+import {
+  aiConfigured,
+  digestStory,
+  type Digest as DigestData,
+  type DigestPick,
+} from "./aiDigest";
+
+// Scroll to the picked comment (by id, falling back to author) and flash it.
+// Queries the shadow root the digest lives in, not the page document.
+function jumpToComment(root: Document | ShadowRoot, pick: DigestPick): void {
+  const sel = pick.id
+    ? `[data-comment-id="${pick.id}"]`
+    : pick.author
+      ? `[data-author="${pick.author.replace(/["\\]/g, "")}"]`
+      : null;
+  const el = sel ? root.querySelector<HTMLElement>(sel) : null;
+  if (!el) return;
+  el.scrollIntoView({ behavior: "smooth", block: "center" });
+  el.classList.add("hatch-flash");
+  setTimeout(() => el.classList.remove("hatch-flash"), 1600);
+}
 
 function Spinner({ className = "size-4" }: { className?: string }) {
   return (
@@ -133,22 +153,37 @@ export function Digest({ story }: { story: StoryItem }) {
       {data.picks.length > 0 && (
         <ul className="space-y-2">
           {data.picks.map((p, i) => (
-            <li
-              key={i}
-              className="rounded-lg border border-[color:var(--color-border)]/60 bg-[color:var(--color-bg-elev)]/40 p-2.5 text-sm"
-            >
-              <span className="font-semibold">{p.author}</span>
-              <span
-                className={
-                  "ml-2 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase " +
-                  (p.action === "reply"
-                    ? "accent-bg text-white"
-                    : "bg-[color:var(--color-bg)] text-[color:var(--color-fg-muted)] ring-1 ring-[color:var(--color-border)]")
+            <li key={i}>
+              <button
+                type="button"
+                onClick={(e) =>
+                  jumpToComment(
+                    e.currentTarget.getRootNode() as Document | ShadowRoot,
+                    p,
+                  )
                 }
+                className="block w-full rounded-lg border border-[color:var(--color-border)]/60 bg-[color:var(--color-bg-elev)]/40 p-2.5 text-left text-sm transition hover:border-[color:var(--color-accent)] hover:bg-[color:var(--color-bg-elev)]"
               >
-                {p.action}
-              </span>
-              <p className="mt-1 text-[color:var(--color-fg-muted)]">{p.why}</p>
+                <span className="flex items-center gap-2">
+                  <span className="font-semibold">{p.author}</span>
+                  <span
+                    className={
+                      "rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase " +
+                      (p.action === "reply"
+                        ? "accent-bg text-white"
+                        : "bg-[color:var(--color-bg)] text-[color:var(--color-fg-muted)] ring-1 ring-[color:var(--color-border)]")
+                    }
+                  >
+                    {p.action}
+                  </span>
+                  <span className="ml-auto text-xs text-[color:var(--color-accent)]">
+                    jump ↓
+                  </span>
+                </span>
+                <span className="mt-1 block text-[color:var(--color-fg-muted)]">
+                  {p.why}
+                </span>
+              </button>
             </li>
           ))}
         </ul>
