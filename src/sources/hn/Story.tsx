@@ -3,7 +3,8 @@ import type { ItemViewProps } from "../types";
 import { fetchStory, type CommentNode, type StoryItem } from "./api";
 import { Upvote } from "./voteContext";
 import { getCommentForm } from "./auth";
-import { faviconUrl, hostname, timeAgo } from "../../lib/format";
+import { hostname, timeAgo } from "../../lib/format";
+import { SiteIcon } from "./SiteIcon";
 import { Comment } from "./Comment";
 import { CommentBox } from "./CommentBox";
 import { Digest } from "./Digest";
@@ -129,14 +130,11 @@ export function Story({ itemId, onBack }: ItemViewProps) {
 
 function StoryHeader({ story }: { story: StoryItem }) {
   const host = hostname(story.url);
-  const favicon = faviconUrl(story.url);
   return (
     <article className="card overflow-hidden p-5 sm:p-6">
       <div className="flex items-start gap-4">
-        {favicon && (
-          <div className="hidden size-12 shrink-0 place-items-center overflow-hidden rounded-xl bg-[color:var(--color-bg)] ring-1 ring-[color:var(--color-border)] sm:grid">
-            <img src={favicon} alt="" width={24} height={24} className="size-6" />
-          </div>
+        {host && (
+          <SiteIcon host={host} className="hidden size-12 text-base sm:grid" />
         )}
         <div className="min-w-0 flex-1">
           <h1 className="text-xl font-semibold leading-tight tracking-tight sm:text-2xl">

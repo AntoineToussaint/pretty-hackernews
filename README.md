@@ -143,8 +143,9 @@ src/
 - **api.anthropic.com / api.openai.com** — used only if you enable AI and
   trigger it, to call the provider you chose with your own key.
 - **storage** — save preferences (and, if you use AI, your key) locally.
-- **declarativeNetRequest** — relax HN's CSP on HN's pages so icons/fonts/preview
-  images load (no requests blocked or redirected). Also strips the `Origin`
+- **declarativeNetRequest** — relax HN's CSP on HN's pages so the Inter font and
+  preview images load (no requests blocked or redirected; site icons are drawn
+  locally). Also strips the `Origin`
   header on the extension's *own* calls to api.anthropic.com (scoped via
   `tabIds:[-1]`) so keys on zero-data-retention orgs work — never touches other
   sites' requests.

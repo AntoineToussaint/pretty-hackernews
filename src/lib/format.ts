@@ -24,8 +24,16 @@ export function hostname(url: string | null): string | null {
   }
 }
 
-export function faviconUrl(url: string | null, size = 64): string | null {
-  const host = hostname(url);
-  if (!host) return null;
-  return `https://www.google.com/s2/favicons?domain=${host}&sz=${size}`;
+/** First letter of a host, for a monogram site tile (no network favicon). */
+export function monogram(host: string | null): string {
+  if (!host) return "";
+  const c = host.replace(/^www\./, "").match(/[a-z0-9]/i);
+  return c ? c[0].toUpperCase() : "#";
+}
+
+/** Deterministic 0–359 hue from a string, so each domain gets a stable colour. */
+export function hueFor(seed: string): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 360;
+  return h;
 }

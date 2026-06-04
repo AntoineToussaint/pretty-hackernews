@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { hostname, faviconUrl, timeAgo } from "../src/lib/format";
+import { hostname, monogram, hueFor, timeAgo } from "../src/lib/format";
 
 test("hostname strips www and ignores junk", () => {
   expect(hostname("https://www.example.com/a/b")).toBe("example.com");
@@ -10,9 +10,18 @@ test("hostname strips www and ignores junk", () => {
   expect(hostname("not a url")).toBe(null);
 });
 
-test("faviconUrl points at a favicon service for the host", () => {
-  expect(faviconUrl("https://example.com")).toContain("example.com");
-  expect(faviconUrl(null)).toBe(null);
+test("monogram is the first alphanumeric letter, uppercased", () => {
+  expect(monogram("example.com")).toBe("E");
+  expect(monogram("www.example.com")).toBe("E");
+  expect(monogram("news.ycombinator.com")).toBe("N");
+  expect(monogram(null)).toBe("");
+});
+
+test("hueFor is deterministic and in range", () => {
+  const h = hueFor("example.com");
+  expect(h).toBe(hueFor("example.com"));
+  expect(h).toBeGreaterThanOrEqual(0);
+  expect(h).toBeLessThan(360);
 });
 
 test("timeAgo formats relative times", () => {

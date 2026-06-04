@@ -69,7 +69,6 @@ test("makes no network calls outside the documented allowlist", () => {
     "news.ycombinator.com", // HN itself — feed/comments + your own HN login
     "hacker-news.firebaseio.com", // HN's official public API (anonymous reads)
     "hn.algolia.com", // HN's official search/data API (anonymous reads)
-    "www.google.com", // site favicons
     "fonts.googleapis.com", // the Inter web font
     "api.anthropic.com", // opt-in AI: your key, only when you trigger it
     "api.openai.com", // opt-in AI: your key, only when you trigger it

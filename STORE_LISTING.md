@@ -61,9 +61,10 @@ Not affiliated with Y Combinator.
 - Network calls, in full: news.ycombinator.com (the feed/comments and, when you
   choose, voting/commenting with your existing login); Hacker News's own public
   data APIs hacker-news.firebaseio.com and hn.algolia.com (anonymous reads);
-  Google for site favicons and the Inter font; the page you click "Preview" on
-  (only if previews are enabled); and api.anthropic.com / api.openai.com (only
-  if you enable AI and trigger it, called directly with your key).
+  fonts.googleapis.com for the Inter font (site icons are drawn locally, no
+  favicon requests); the page you click "Preview" on (only if previews are
+  enabled); and api.anthropic.com / api.openai.com (only if you enable AI and
+  trigger it, called directly with your key).
 - AI is opt-in and used only to summarize/match for reading — never to write
   comments or vote. See the LICENSE covenant.
 - Full source and the complete network list: see the privacy policy + repo.

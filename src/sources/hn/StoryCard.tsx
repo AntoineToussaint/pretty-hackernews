@@ -5,7 +5,8 @@ import { useSeen } from "./seenContext";
 import { usePrefs } from "./prefsContext";
 import { ArticlePeek } from "./ArticlePeek";
 import { isExtension } from "../../lib/runtime";
-import { faviconUrl, hostname, timeAgo } from "../../lib/format";
+import { hostname, timeAgo } from "../../lib/format";
+import { SiteIcon } from "./SiteIcon";
 
 type Props = {
   hit: StoryHit;
@@ -16,8 +17,6 @@ type Props = {
 
 export function StoryCard({ hit, rank, onOpen, selected = false }: Props) {
   const host = hostname(hit.url);
-  const favicon = faviconUrl(hit.url);
-  const [imgFailed, setImgFailed] = useState(false);
   const points = hit.points ?? 0;
   const comments = hit.num_comments ?? 0;
   const id = Number(hit.objectID);
@@ -65,20 +64,7 @@ export function StoryCard({ hit, rank, onOpen, selected = false }: Props) {
           <span className="font-mono text-xs tabular-nums text-[color:var(--color-fg-muted)]">
             {String(rank).padStart(2, "0")}
           </span>
-          <div className="grid size-10 place-items-center overflow-hidden rounded-lg bg-[color:var(--color-bg)] ring-1 ring-[color:var(--color-border)]">
-            {favicon && !imgFailed ? (
-              <img
-                src={favicon}
-                alt=""
-                width={20}
-                height={20}
-                className="size-5"
-                onError={() => setImgFailed(true)}
-              />
-            ) : (
-              <span className="text-base">{host ? "🔗" : "💬"}</span>
-            )}
-          </div>
+          <SiteIcon host={host} className="size-10 text-sm" />
         </div>
 
         <div className="min-w-0 flex-1">
