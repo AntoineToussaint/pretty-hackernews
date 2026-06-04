@@ -3,6 +3,7 @@ import { DEFAULT_THEME, isThemeId, THEME_IDS, type ThemeId } from "./lib/themes"
 import { DEFAULT_SOURCE_ID, SOURCES, getSource } from "./sources/registry";
 import { Header } from "./components/Header";
 import { Settings } from "./components/Settings";
+import { SettingsModal } from "./components/SettingsModal";
 
 type Route =
   | { kind: "list"; sourceId: string; feedId: string }
@@ -52,6 +53,7 @@ function getInitialTheme(): ThemeId {
 export function App() {
   const [route, setRoute] = useState<Route>(() => parseHash());
   const [theme, setTheme] = useState<ThemeId>(getInitialTheme);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
     const onHash = () => setRoute(parseHash());
@@ -83,7 +85,16 @@ export function App() {
         onOpenItem={(id) => setHash(itemHash(source.id, id))}
         theme={theme}
         onThemeChange={setTheme}
+        showThemeSwitcher={false}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
+      {settingsOpen && (
+        <SettingsModal
+          theme={theme}
+          onThemeChange={setTheme}
+          onClose={() => setSettingsOpen(false)}
+        />
+      )}
       <main className="mx-auto max-w-3xl px-4 pb-24 pt-6 sm:pt-10">
         {route.kind === "settings" ? (
           <Settings

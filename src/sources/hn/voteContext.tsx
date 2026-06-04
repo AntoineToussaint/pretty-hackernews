@@ -46,10 +46,16 @@ export function VoteProvider({
   const [voted, setVoted] = useState<Set<number>>(initialVoted);
   const [busy, setBusy] = useState<Set<number>>(() => new Set());
 
-  // On client-side navigation the `links` (and thus the server-truth set of
-  // already-voted ids) change, but useState keeps its first value — which left
-  // stale upvote highlighting across views. Re-sync to the new server truth.
-  useEffect(() => setVoted(initialVoted), [initialVoted]);
+  // When `links` change (client-side nav, or the post-load vote-token re-fetch),
+  // fold in any server-known "already voted" ids — but MERGE, never replace, so
+  // a vote the user just cast optimistically is never wiped by a re-fetch that
+  // predates it.
+  useEffect(() => {
+    setVoted((prev) => {
+      if ([...initialVoted].every((id) => prev.has(id))) return prev;
+      return new Set([...prev, ...initialVoted]);
+    });
+  }, [initialVoted]);
 
   const api = useMemo<VoteApi>(() => {
     const enabled = Boolean(links && links.size > 0);

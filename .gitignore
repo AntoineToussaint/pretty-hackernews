@@ -34,3 +34,4 @@ bun.lockb
 .plasmo
 build/
 src/compiled.css
+_site

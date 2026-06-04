@@ -2,6 +2,7 @@ import { useState } from "react";
 import { THEMES, type ThemeId } from "../lib/themes";
 import { usePrefs } from "../sources/hn/prefsContext";
 import { AiProfileForm } from "./AiProfileForm";
+import { isExtension } from "../lib/runtime";
 
 type Props = {
   theme: ThemeId;
@@ -15,7 +16,86 @@ type Props = {
 const sectionTitle =
   "mb-2 text-[11px] font-medium uppercase tracking-wider text-[color:var(--color-fg-muted)]";
 
-/** The single in-reader settings surface — everything lives here, on the page. */
+/** Shared centered-overlay shell so the AI sub-modal matches the main one. */
+function Overlay({
+  label,
+  z,
+  onClose,
+  children,
+}: {
+  label: string;
+  z: number;
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="fixed inset-0 grid place-items-start justify-center overflow-y-auto bg-black/50 p-4 pt-[6vh] backdrop-blur-sm"
+      style={{ zIndex: z }}
+      onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-label={label}
+    >
+      <div
+        className="card w-full max-w-lg p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function CloseButton({ onClose }: { onClose: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label="Close"
+      className="grid size-8 place-items-center rounded-full text-[color:var(--color-fg-muted)] transition hover:bg-[color:var(--color-bg-elev)] hover:text-[color:var(--color-fg)]"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        className="size-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        aria-hidden="true"
+      >
+        <path d="M6 6l12 12M18 6L6 18" />
+      </svg>
+    </button>
+  );
+}
+
+/** The AI & profile settings, in their own modal to keep the main one compact. */
+function AiSettingsModal({ onClose }: { onClose: () => void }) {
+  return (
+    <Overlay label="AI & profile settings" z={2147483645} onClose={onClose}>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-semibold tracking-tight">✨ AI &amp; profile</h2>
+        <CloseButton onClose={onClose} />
+      </div>
+      {!isExtension() && (
+        <div className="mb-4 rounded-lg border border-[color:var(--color-accent)]/40 bg-[color:var(--color-accent)]/10 p-3 text-xs leading-relaxed text-[color:var(--color-fg)]">
+          Preview only. AI runs in the installed Hatch extension, where your key
+          and every request stay in your browser and go straight to the provider
+          you choose. It won't actually call a provider on this demo page.
+        </div>
+      )}
+      <p className="mb-1 text-xs leading-relaxed text-[color:var(--color-fg-muted)]">
+        Bring your own key — stored only in your browser and used to call the
+        provider directly. AI is optional and used only to help you read
+        (summaries + matching); it never posts or votes for you.
+      </p>
+      <AiProfileForm />
+    </Overlay>
+  );
+}
+
+/** The single in-reader settings surface. */
 export function SettingsModal({
   theme,
   onThemeChange,
@@ -26,40 +106,15 @@ export function SettingsModal({
 }: Props) {
   const prefs = usePrefs();
   const [themeOpen, setThemeOpen] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
   const current = THEMES.find((t) => t.id === theme) ?? THEMES[0];
 
   return (
-    <div
-      className="fixed inset-0 z-[2147483640] grid place-items-start justify-center overflow-y-auto bg-black/50 p-4 pt-[6vh] backdrop-blur-sm"
-      onClick={onClose}
-      role="dialog"
-      aria-modal="true"
-      aria-label="Hatch settings"
-    >
-      <div
-        className="card w-full max-w-lg p-6 shadow-2xl"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <>
+      <Overlay label="Hatch settings" z={2147483640} onClose={onClose}>
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight">Settings</h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close settings"
-            className="grid size-8 place-items-center rounded-full text-[color:var(--color-fg-muted)] transition hover:bg-[color:var(--color-bg-elev)] hover:text-[color:var(--color-fg)]"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              className="size-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              aria-hidden="true"
-            >
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
+          <CloseButton onClose={onClose} />
         </div>
 
         {/* Theme */}
@@ -189,16 +244,27 @@ export function SettingsModal({
           </div>
         )}
 
-        {/* AI & profile */}
+        {/* AI & profile — opens its own modal so this one stays compact */}
         <div className="mt-6 border-t border-[color:var(--color-border)] pt-5">
-          <div className={sectionTitle}>✨ AI &amp; profile</div>
-          <p className="mb-1 text-xs text-[color:var(--color-fg-muted)]">
-            Bring your own key. It's stored only in this browser and used to call
-            the provider directly — nothing goes to any other server.
-          </p>
-          <AiProfileForm />
+          <button
+            type="button"
+            onClick={() => setAiOpen(true)}
+            className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm ring-1 ring-[color:var(--color-border)] transition hover:bg-[color:var(--color-bg-elev)]"
+          >
+            <span className="flex-1">
+              <span className="font-medium">✨ AI &amp; profile</span>
+              <span className="ml-2 text-xs text-[color:var(--color-fg-muted)]">
+                summaries &amp; matching — optional
+              </span>
+            </span>
+            <span aria-hidden="true" className="text-[color:var(--color-fg-muted)]">
+              →
+            </span>
+          </button>
         </div>
-      </div>
-    </div>
+      </Overlay>
+
+      {aiOpen && <AiSettingsModal onClose={() => setAiOpen(false)} />}
+    </>
   );
 }

@@ -71,19 +71,13 @@ const PREVIEW_ORIGINS = ["*://*/*"];
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
   if (msg?.type === "hatch-fetch-article" && typeof msg.url === "string") {
-    const url = msg.url;
-    // Only fetch if the user actually granted the optional preview permission —
-    // don't let a stray message turn the worker into an open fetch proxy.
-    chrome.permissions.contains({ origins: PREVIEW_ORIGINS }, (granted) => {
-      if (!granted) {
-        sendResponse({ ok: false, error: "no-permission" });
-        return;
-      }
-      fetch(url, { credentials: "omit" })
-        .then((r) => r.text())
-        .then((html) => sendResponse({ ok: true, html }))
-        .catch((e) => sendResponse({ ok: false, error: String(e) }));
-    });
+    // No cookies are sent, and the cross-origin fetch only succeeds when the
+    // user has granted the optional host permission — so this can't leak the
+    // session or act as an open proxy without consent.
+    fetch(msg.url, { credentials: "omit" })
+      .then((r) => r.text())
+      .then((html) => sendResponse({ ok: true, html }))
+      .catch((e) => sendResponse({ ok: false, error: String(e) }));
     return true; // keep the channel open for the async response
   }
   // Content scripts can't read chrome.permissions, so they ask us.

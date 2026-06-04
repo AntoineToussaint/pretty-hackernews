@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hatch — a calmer Hacker News</title>
+    <meta
+      name="description"
+      content="An open-source, local-first browser extension that re-skins Hacker News in place — themes, keyboard nav, inline previews, optional bring-your-own-key AI. Reading only; it never posts for you."
+    />
+    <meta property="og:title" content="Hatch — a calmer Hacker News" />
+    <meta
+      property="og:description"
+      content="Open-source, local-first re-skin of Hacker News. Classic-dense by default, themes, keyboard nav, inline previews, optional BYO-key AI digest. It never posts for you."
+    />
+    <style>
+      :root {
+        --bg: #0a0a0c;
+        --elev: #15151a;
+        --fg: #f5f5f4;
+        --muted: #a1a1aa;
+        --border: #27272a;
+        --accent: #ff6600;
+        --accent2: #ff3d81;
+      }
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        font: 16px/1.65 "Inter", ui-sans-serif, system-ui, -apple-system,
+          "Segoe UI", Roboto, sans-serif;
+        color: var(--fg);
+        background:
+          radial-gradient(ellipse 70% 50% at 50% -10%,
+            color-mix(in oklab, var(--accent) 16%, transparent), transparent 60%),
+          radial-gradient(ellipse 50% 40% at 90% 5%,
+            color-mix(in oklab, var(--accent2) 12%, transparent), transparent 60%),
+          var(--bg);
+        -webkit-font-smoothing: antialiased;
+      }
+      a { color: inherit; }
+      .wrap { max-width: 860px; margin: 0 auto; padding: 0 20px; }
+      .grad {
+        background: linear-gradient(100deg, var(--accent), var(--accent2));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      header.hero { padding: 96px 0 56px; text-align: center; }
+      .logo {
+        display: inline-grid; place-items: center;
+        width: 56px; height: 56px; border-radius: 16px;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        font-weight: 800; font-size: 28px; color: #fff; margin-bottom: 22px;
+      }
+      h1 { font-size: clamp(36px, 6vw, 56px); line-height: 1.05; margin: 0 0 16px; letter-spacing: -0.02em; }
+      .tagline { font-size: clamp(17px, 2.4vw, 21px); color: var(--muted); max-width: 620px; margin: 0 auto 32px; }
+      .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+      .btn {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 12px 22px; border-radius: 999px; font-weight: 600;
+        text-decoration: none; transition: transform .12s ease, opacity .12s ease;
+      }
+      .btn:hover { transform: translateY(-1px); }
+      .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; }
+      .btn-ghost { border: 1px solid var(--border); color: var(--fg); background: rgba(255,255,255,.02); }
+      .pill { display: inline-block; font-size: 12px; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; margin-bottom: 24px; }
+      section { padding: 40px 0; }
+      h2 { font-size: 26px; letter-spacing: -0.01em; margin: 0 0 20px; }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+      .card { background: var(--elev); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+      .card h3 { margin: 0 0 6px; font-size: 15px; }
+      .card p { margin: 0; color: var(--muted); font-size: 14px; }
+      .shots { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      .shots img { width: 100%; border-radius: 12px; border: 1px solid var(--border); display: block; }
+      .trust { background: var(--elev); border: 1px solid var(--border); border-radius: 16px; padding: 26px 28px; }
+      .trust ul { margin: 0; padding-left: 20px; }
+      .trust li { margin: 8px 0; color: var(--muted); }
+      .trust li strong { color: var(--fg); }
+      ol.steps { padding-left: 20px; }
+      ol.steps li { margin: 10px 0; color: var(--muted); }
+      code { background: #000; border: 1px solid var(--border); padding: 1px 6px; border-radius: 6px; font-size: 13px; color: var(--fg); }
+      footer { padding: 48px 0 64px; color: var(--muted); font-size: 13px; text-align: center; border-top: 1px solid var(--border); margin-top: 40px; }
+      footer a { color: var(--muted); }
+      @media (max-width: 560px) { .shots { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header class="hero">
+      <div class="wrap">
+        <div class="logo">H</div>
+        <div class="pill">Open-source · local-first · MV3 browser extension</div>
+        <h1>A calmer <span class="grad">Hacker News</span>,<br />right on the real site.</h1>
+        <p class="tagline">
+          Hatch re-skins news.ycombinator.com <em>in place</em> — same page, same
+          links, your existing login. Dense Classic look by default, themes one
+          toggle away, and plain HN one toggle back.
+        </p>
+        <div class="cta">
+          <a class="btn btn-primary" href="demo/">Try the reader →</a>
+          <a class="btn btn-ghost" href="https://github.com/AntoineToussaint/pretty-hackernews">Source on GitHub</a>
+          <a class="btn btn-ghost" href="#install">How to install</a>
+        </div>
+        <p style="color: var(--muted); font-size: 13px; margin-top: 14px">
+          The demo is a no-install taste of the reader. Voting, commenting, and
+          AI need the installed extension.
+        </p>
+      </div>
+    </header>
+
+    <main class="wrap">
+      <section>
+        <div class="shots">
+          <img src="assets/01-feed.png" alt="Hatch feed view" />
+          <img src="assets/02-story.png" alt="Hatch story and comments" />
+        </div>
+      </section>
+
+      <section>
+        <h2>What it does</h2>
+        <div class="grid">
+          <div class="card"><h3>Renders in place</h3><p>Takes over HN's feed and item pages with a clean reader; other pages stay native.</p></div>
+          <div class="card"><h3>Themes</h3><p>A faithful, dense Classic by default — plus calmer and playful themes (yes, a Bloomberg terminal one).</p></div>
+          <div class="card"><h3>Your real account</h3><p>Upvote, comment, and reply via the HN session already in your browser. No passwords stored.</p></div>
+          <div class="card"><h3>Keyboard + collapse</h3><p>j/k to move, o/Enter to open, u to upvote; collapse threads, read/seen dimming, save for later.</p></div>
+          <div class="card"><h3>Inline previews</h3><p>Read a linked article's clean text inline, without leaving HN. Optional, off by default.</p></div>
+          <div class="card"><h3>Optional AI digest</h3><p>Bring your own key. Summarizes a thread and matches stories to your interests. Reading only — never posts.</p></div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Built to be trusted</h2>
+        <div class="trust">
+          <ul>
+            <li><strong>No backend, no analytics.</strong> Everything runs locally; your settings live in your browser.</li>
+            <li><strong>Scoped permissions.</strong> Access is limited to news.ycombinator.com (plus optional, on-demand access only if you turn on article previews).</li>
+            <li><strong>AI is opt-in.</strong> With no key, Hatch makes zero AI calls. When enabled, requests go straight from your browser to the provider you chose, with your key — through no server of ours.</li>
+            <li><strong>AI is for reading, never for speaking.</strong> It summarizes and matches; it will never write comments or vote for you. That's a covenant in the <a href="https://github.com/AntoineToussaint/pretty-hackernews/blob/main/LICENSE">LICENSE</a>.</li>
+            <li><strong>Verifiable.</strong> The guarantees are enforced by <a href="https://github.com/AntoineToussaint/pretty-hackernews/blob/main/test/trust.test.ts">tests that run in CI</a>, and every network call is listed in the <a href="privacy.html">privacy policy</a>.</li>
+          </ul>
+        </div>
+      </section>
+
+      <section id="install">
+        <h2>Install</h2>
+        <p style="color: var(--muted)">
+          A Chrome Web Store listing is in review. Until then, load it unpacked:
+        </p>
+        <ol class="steps">
+          <li>Clone the repo and run <code>bun install</code> then <code>bun run plasmo:build</code>.</li>
+          <li>Open <code>chrome://extensions</code> and turn on <strong>Developer mode</strong>.</li>
+          <li><strong>Load unpacked</strong> → select <code>build/chrome-mv3-prod</code>.</li>
+          <li>Open <a href="https://news.ycombinator.com">news.ycombinator.com</a>.</li>
+        </ol>
+        <p style="color: var(--muted)">
+          Full instructions are in the <a href="https://github.com/AntoineToussaint/pretty-hackernews#readme">README</a>.
+        </p>
+      </section>
+    </main>
+
+    <footer>
+      <div class="wrap">
+        <p>
+          <a href="https://github.com/AntoineToussaint/pretty-hackernews">Source</a> ·
+          <a href="privacy.html">Privacy</a> ·
+          <a href="https://github.com/AntoineToussaint/pretty-hackernews/blob/main/LICENSE">MIT + AI covenant</a>
+        </p>
+        <p>Not affiliated with Y Combinator.</p>
+      </div>
+    </footer>
+  </body>
+</html>
