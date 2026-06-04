@@ -38,24 +38,29 @@ standalone web build of the same reader.
   [DOMPurify](https://github.com/cure53/DOMPurify) for inline previews
 - [Vite](https://vitejs.dev/) for the standalone web build
 
+## Prerequisites
+
+- [Bun](https://bun.sh) 1.1+ (`curl -fsSL https://bun.sh/install | bash`)
+- Google Chrome (or any Chromium browser)
+
 ## Run the extension (dev)
 
 ```sh
 bun install
-bun run css:watch    # terminal 1 — recompiles Tailwind on change
-bun run plasmo:dev   # terminal 2 — Plasmo dev server with hot reload
+bun run plasmo:dev   # compiles Tailwind, watches it, and starts Plasmo (hot reload)
 ```
 
-Then load it once:
+That single command handles everything — no second terminal needed. Then load
+it once:
 
 1. Open `chrome://extensions`
 2. Enable **Developer mode**
 3. **Load unpacked** → select `build/chrome-mv3-dev`
 4. Open **https://news.ycombinator.com**
 
-Edits hot-reload. (Tailwind is decoupled from Plasmo's bundler — `css:watch`
-regenerates `src/compiled.css`, which the content script injects into its Shadow
-DOM. See *How it works*.)
+Edits hot-reload. (`plasmo:dev` also runs the Tailwind watcher: Tailwind is
+decoupled from Plasmo's bundler and regenerates `src/compiled.css`, which the
+content script injects into its Shadow DOM. See *How it works*.)
 
 ## Build / package the extension
 
@@ -66,6 +71,12 @@ bun run plasmo:zip     # → build/chrome-mv3-prod.zip  (upload to the Web Store
 
 See [`STORE_LISTING.md`](./STORE_LISTING.md) for listing copy + permission
 justifications, and [`TESTING.md`](./TESTING.md) for sharing a test build.
+
+## Tests
+
+```sh
+bun test   # trust guarantees + unit tests (also run in CI on every push/PR)
+```
 
 ## Run the standalone web reader
 
