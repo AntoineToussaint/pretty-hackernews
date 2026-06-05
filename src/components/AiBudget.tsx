@@ -42,8 +42,11 @@ export function AiBudget({ onClick }: { onClick?: () => void }) {
       : ratio >= 0.8
         ? "text-amber-400"
         : "text-[color:var(--color-fg-muted)]";
-  const label =
-    budget > 0 ? `$${spent.toFixed(2)} / $${budget.toFixed(2)}` : `$${spent.toFixed(2)}`;
+  // Digests are cheap (often sub-cent), so 2 decimals would read "$0.00" even
+  // after a run — show more precision for small amounts so spend is visible.
+  const fmt = (n: number) =>
+    n === 0 ? "$0.00" : n < 0.1 ? `$${n.toFixed(3)}` : `$${n.toFixed(2)}`;
+  const label = budget > 0 ? `${fmt(spent)} / $${budget.toFixed(2)}` : fmt(spent);
 
   return (
     <button

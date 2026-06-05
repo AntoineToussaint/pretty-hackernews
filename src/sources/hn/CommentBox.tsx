@@ -89,7 +89,7 @@ export function CommentBox({
           {status === "error"
             ? "Couldn't post — try again"
             : status === "done"
-              ? "Posted ✓"
+              ? "Posted ✓ — may take a minute to show (HN's data API lags)"
               : ""}
         </span>
         <button

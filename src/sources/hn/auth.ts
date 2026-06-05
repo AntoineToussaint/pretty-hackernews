@@ -205,5 +205,14 @@ export async function postComment(
   // user's text. On success HN redirects to the goto (the item page); a reject
   // re-renders the /comment page in place. Treat "landed on the item page" as
   // the success signal.
-  return res.ok && (res.redirected || /\/item\?id=/.test(res.url));
+  const ok = res.ok && (res.redirected || /\/item\?id=/.test(res.url));
+  dlog("postComment", {
+    parentId,
+    status: res.status,
+    redirected: res.redirected,
+    landedOn: res.url,
+    hmacLen: hmac.length,
+    success: ok,
+  });
+  return ok;
 }
