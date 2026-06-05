@@ -10,6 +10,8 @@ type Props = {
   feedId: string | null;
   onFeedChange: (feedId: string) => void;
   onOpenItem: (id: string) => void;
+  /** If provided, the logo is a button calling this; else it links to the feed hash. */
+  onHome?: () => void;
   /** Show the paste-a-link box (web app); off for the in-place reader. */
   showSearch?: boolean;
   /** Show the settings gear. */
@@ -28,6 +30,7 @@ export function Header({
   feedId,
   onFeedChange,
   onOpenItem,
+  onHome,
   showSearch = true,
   showSettings = true,
   onOpenSettings,
@@ -35,33 +38,44 @@ export function Header({
   savedActive = false,
 }: Props) {
   const homeHash = `#/${activeSource.id}/${activeSource.defaultFeed}`;
+  const logoInner = (
+    <>
+      <span className="accent-bg flex size-8 items-center justify-center rounded-xl shadow-md shadow-[color:var(--color-accent)]/30">
+        <svg
+          viewBox="0 0 32 32"
+          className="size-5 text-white"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <path d="M9 9l7 8 7-8M16 17v8" />
+        </svg>
+      </span>
+      <span className="text-base font-semibold tracking-tight">Hatch</span>
+    </>
+  );
+  const logoClass = "group flex shrink-0 items-center gap-2.5";
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl">
       <div className="absolute inset-0 -z-10 bg-[color:var(--color-bg)]/70 border-b border-[color:var(--color-border)]" />
       <div className="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3">
-        <a
-          href={homeHash}
-          className="group flex shrink-0 items-center gap-2.5"
-          aria-label="Hatch — home"
-        >
-          <span className="accent-bg flex size-8 items-center justify-center rounded-xl shadow-md shadow-[color:var(--color-accent)]/30">
-            <svg
-              viewBox="0 0 32 32"
-              className="size-5 text-white"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M9 9l7 8 7-8M16 17v8" />
-            </svg>
-          </span>
-          <span className="text-base font-semibold tracking-tight">
-            Hatch
-          </span>
-        </a>
+        {onHome ? (
+          <button
+            type="button"
+            onClick={onHome}
+            className={logoClass}
+            aria-label="Hatch — home"
+          >
+            {logoInner}
+          </button>
+        ) : (
+          <a href={homeHash} className={logoClass} aria-label="Hatch — home">
+            {logoInner}
+          </a>
+        )}
 
         {sources.length > 1 && (
           <SourceSwitcher

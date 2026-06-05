@@ -235,6 +235,7 @@ export default function HNReader() {
         feedId={route.kind === "feed" ? route.feedId : null}
         onFeedChange={(f) => navigate(FEED_TO_PATH[f] ?? "/news")}
         onOpenItem={openItem}
+        onHome={() => navigate(FEED_TO_PATH[defaultFeed] ?? "/news")}
         showSearch={false}
         showSettings={true}
         onOpenSettings={() => setSettingsOpen(true)}
