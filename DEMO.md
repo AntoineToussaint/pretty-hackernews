@@ -16,7 +16,7 @@ username.
 | 0:13–0:18 | a story's comments | Click into a story. Collapse one thread `[-]`, scroll a little. Calm. |
 | 0:18–0:22 | an upvote arrow | Hover → click upvote. Count ticks, **no reload**. (Optional: `u` for keyboard upvote.) |
 | 0:22–0:27 | a link story → **Preview** | Click Preview; clean inline article expands. Scroll one line. |
-| 0:27–0:32 | **✨ AI digest** | Click. Spinner → verdict + 2 comment picks. Hold, then stop. Last + brief — AI reads as a bonus. |
+| 0:27–0:32 | **✨ AI brief** | Click. Spinner → article thesis + bullets, then thread verdict + comment picks. Hold, then stop. Last — AI reads as a bonus. |
 
 Looping GIF for HN/Twitter: loop **0:05–0:13** (the theme morph). Keep < ~5MB.
 
@@ -26,7 +26,7 @@ Looping GIF for HN/Twitter: loop **0:05–0:13** (the theme morph). Keep < ~5MB.
 2. Story + comments — "Threaded comments, collapse, jump around — keyboard-first."
 3. Settings modal (themes open) — "Make it yours: 13 themes, from faithful Classic to Bloomberg."
 4. Inline preview — "Read the linked article inline. Never leave HN."
-5. AI digest — "Optional, bring-your-own-key AI: triages a thread for you. Reading only — never posts."
+5. AI brief — "Optional, bring-your-own-key AI: summarizes the article + thread for you. Reading only — never posts."
 
 ## Show HN draft
 
@@ -59,7 +59,7 @@ On trust, since this touches a site you care about:
 - The trust guarantees are enforced by tests that run in CI — no reading
   document.cookie, the logged-in session only ever goes to HN, previews are
   fetched without cookies, and it contacts no host outside a documented list.
-- There's an **optional** AI digest (off by default, bring your own key, called
+- There's an **optional** AI brief (off by default, bring your own key, called
   directly from your browser to the provider). It exists only to *read* —
   summarize a thread, match stories to your interests. It will never write
   comments or vote for you; that's a covenant in the LICENSE.

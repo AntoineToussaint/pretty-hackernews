@@ -23,9 +23,9 @@ standalone web build of the same reader.
 - Save/bookmark, mute domains, collapse threads, default feed
 - Optional **inline article previews** — read the linked page (clean text +
   image) without leaving HN
-- Optional **AI digest** (off by default, bring your own key) — summarizes a
-  thread and matches stories to your interests. Reading-only — see *Privacy &
-  trust*.
+- Optional **AI brief** (off by default, bring your own key) — summarizes the
+  linked article (thesis + bullets) and the comment thread, and points you to
+  the comments worth reading. Reading-only — see *Privacy & trust*.
 - Local-first: no servers of our own, no analytics; preferences live in
   `chrome.storage`
 

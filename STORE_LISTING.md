@@ -27,9 +27,9 @@ Features
 • Save stories, mute domains, collapse comment threads, set a default feed.
 • Optional inline article previews — read the linked page (clean text + image)
   without leaving HN.
-• Optional AI digest (off by default, bring your own key) — summarizes a thread
-  and matches stories to your interests. It only helps you read; it never writes
-  comments or votes for you.
+• Optional AI brief (off by default, bring your own key) — summarizes the linked
+  article and the comment thread, and points you to comments worth reading. It
+  only helps you read; it never writes comments or votes for you.
 
 Local-first: no accounts, no servers of our own, no tracking. Your settings,
 bookmarks, history — and, if you use AI, your key — live only in your browser.
