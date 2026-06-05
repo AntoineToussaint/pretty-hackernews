@@ -1,4 +1,5 @@
 import type { CommentNode, StoryItem } from "./api";
+import { loadArticle } from "./article";
 import { hostname } from "../../lib/format";
 import { DEFAULT_MODELS, type Provider } from "../../lib/llm";
 
@@ -128,7 +129,9 @@ export type DigestPick = {
   action: "read" | "reply";
 };
 export type Digest = {
-  verdict: string;
+  thesis: string; // the article's core claim (empty if no article)
+  summary: string[]; // article key points (empty if no article)
+  verdict: string; // is the comment thread worth this reader's time
   worth: "yes" | "maybe" | "no";
   picks: DigestPick[];
 };
@@ -198,25 +201,35 @@ function flatten(nodes: CommentNode[], out: string[], cap: number) {
 
 function buildPrompt(
   story: StoryItem,
+  articleText: string,
   profile: string,
   interests: string[],
 ): { system: string; user: string } {
   const system =
-    "You triage Hacker News for one specific reader. " +
+    "You brief one specific Hacker News reader on a post: the linked ARTICLE (if any) and its COMMENT thread. " +
     `Reader profile: ${profile || "(none given)"}. ` +
     `Stated interests: ${interests.join(", ") || "(none given)"}. ` +
-    "Given a post and its comments, judge whether it's worth THIS reader's time and pick the few most valuable comments for them to read, plus any they're well-placed to reply to. " +
+    "Summarize the article's key points, then judge whether the thread is worth THIS reader's time and pick the few most valuable comments to read, plus any they're well-placed to reply to. " +
     "Each comment is prefixed with its id like [#12345]. " +
-    'Respond with ONLY minified JSON, no markdown fences: {"verdict": "<=1 sentence", "worth": "yes"|"maybe"|"no", "picks": [{"id": number, "author": string, "why": "<=1 sentence", "action": "read"|"reply"}]}. ' +
-    "The id MUST be the exact number from the [#...] prefix of the comment you picked. " +
-    "Pick at most 5. If no comments are worth it, return an empty picks array.";
+    "Respond with ONLY minified JSON, no markdown fences: " +
+    '{"thesis": "<=1 sentence core claim of the article, or \\"\\" if no article", ' +
+    '"summary": ["3-5 short bullets of the article\'s key points; [] if no article"], ' +
+    '"verdict": "<=1 sentence on whether the thread is worth this reader\'s time", ' +
+    '"worth": "yes"|"maybe"|"no", ' +
+    '"picks": [{"id": number, "author": string, "why": "<=1 sentence", "action": "read"|"reply"}]}. ' +
+    "The id MUST be the exact number from the [#...] prefix. Pick at most 5; [] if none worth it.";
 
   const comments: string[] = [];
   flatten(story.children, comments, 30);
   const host = hostname(story.url);
+  const article = articleText
+    ? `\nARTICLE:\n${articleText.slice(0, 8000)}\n`
+    : story.text
+      ? `\nPOST TEXT:\n${strip(story.text).slice(0, 4000)}\n`
+      : "";
   const user =
     `POST: ${story.title}${host ? ` (${host})` : ""}\n` +
-    (story.text ? `POST TEXT: ${strip(story.text).slice(0, 1500)}\n` : "") +
+    article +
     `\nCOMMENTS (${comments.length} shown):\n` +
     comments.join("\n");
   return { system, user };
@@ -237,6 +250,10 @@ function parseDigest(text: string): Digest | null {
   const d = parseJsonObject(text);
   if (!d) return null;
   return {
+    thesis: String(d.thesis ?? ""),
+    summary: Array.isArray(d.summary)
+      ? d.summary.map((b: unknown) => String(b).trim()).filter(Boolean).slice(0, 6)
+      : [],
     verdict: String(d.verdict ?? ""),
     worth: d.worth === "yes" || d.worth === "no" ? d.worth : "maybe",
     picks: Array.isArray(d.picks)
@@ -294,7 +311,15 @@ export async function digestStory(
 ): Promise<{ ok: true; digest: Digest } | { ok: false; error: string }> {
   try {
     const { profile, interests } = await getProfile();
-    const { system, user } = buildPrompt(story, profile, interests);
+    // Pull in the linked article so the brief can summarize it (not just the
+    // comments). Best-effort: needs the optional preview permission; if it's not
+    // granted or extraction fails, we brief the thread only.
+    let articleText = "";
+    if (story.url) {
+      const art = await loadArticle(story.url);
+      if (art) articleText = strip(art.html);
+    }
+    const { system, user } = buildPrompt(story, articleText, profile, interests);
     const res = await send<{ ok: boolean; text?: string; error?: string }>({
       type: "hatch-llm",
       system,
@@ -324,57 +349,6 @@ export async function digestStory(
         ? `Couldn't parse the AI response: ${snippet}…`
         : "The model returned an empty response.",
     };
-  } catch (e) {
-    return { ok: false, error: String(e) };
-  }
-}
-
-export type ArticleSummary = { thesis: string; bullets: string[] };
-
-/**
- * Summarize an already-extracted article (the Readability HTML we render for the
- * preview) into a thesis + key bullets. Reuses the extracted content — no extra
- * fetch — and respects the same budget/limit path as the digest.
- */
-export async function summarizeArticle(
-  title: string,
-  html: string,
-): Promise<{ ok: true; summary: ArticleSummary } | { ok: false; error: string }> {
-  const text = strip(html);
-  if (!text.trim())
-    return { ok: false, error: "No readable article text to summarize." };
-  try {
-    const { interests } = await getProfile();
-    const system =
-      "You summarize a web article for a busy Hacker News reader. " +
-      (interests.length ? `The reader cares about: ${interests.join(", ")}. ` : "") +
-      'Respond with ONLY minified JSON, no markdown: {"thesis": "<=1 sentence core claim", "bullets": ["3-6 short key points, most important first"]}. ' +
-      "Be concrete and faithful to the article; no fluff or preamble.";
-    const user = `TITLE: ${title}\n\nARTICLE:\n${text.slice(0, 8000)}`;
-    const res = await send<{ ok: boolean; text?: string; error?: string }>({
-      type: "hatch-llm",
-      system,
-      user,
-      maxTokens: 700,
-    });
-    if (!res) return { ok: false, error: "No response from the extension." };
-    if (!res.ok) {
-      return {
-        ok: false,
-        error:
-          res.error === "not-configured"
-            ? "Add your API key in Settings (the gear, top-right)."
-            : res.error === "daily-limit"
-              ? "You've hit today's AI budget. Raise it in Settings → AI & profile."
-              : res.error || "AI request failed.",
-      };
-    }
-    const d = parseJsonObject(res.text ?? "");
-    if (!d) return { ok: false, error: "Couldn't parse the AI response." };
-    const bullets = Array.isArray(d.bullets)
-      ? d.bullets.map((b: unknown) => String(b).trim()).filter(Boolean).slice(0, 6)
-      : [];
-    return { ok: true, summary: { thesis: String(d.thesis ?? ""), bullets } };
   } catch (e) {
     return { ok: false, error: String(e) };
   }

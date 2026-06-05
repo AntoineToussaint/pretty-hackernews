@@ -66,9 +66,10 @@ function Spinner({ className = "size-4" }: { className?: string }) {
 }
 
 const LOADING_STEPS = [
+  "Reading the article…",
   "Reading the thread…",
   "Weighing it against your interests…",
-  "Picking the comments worth your time…",
+  "Writing your brief…",
 ];
 
 /** Animated placeholder with a spinner and rotating status copy. */
@@ -135,7 +136,7 @@ export function Digest({ story }: { story: StoryItem }) {
           onClick={run}
           className="accent-bg inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
         >
-          ✨ {state.s === "error" ? "Try AI digest again" : "AI digest"}
+          ✨ {state.s === "error" ? "Try AI brief again" : "AI brief"}
         </button>
         {state.s === "error" && (
           <div className="rounded-lg border border-[color:var(--color-border)] bg-[color:var(--color-bg-elev)] p-2.5 text-xs leading-relaxed text-[color:var(--color-fg-muted)]">
@@ -160,13 +161,40 @@ export function Digest({ story }: { story: StoryItem }) {
     <div className="card space-y-3 p-4 sm:p-5">
       <div className="flex items-center gap-2">
         <span className="text-xs font-semibold uppercase tracking-wider text-[color:var(--color-fg-muted)]">
-          ✨ Digest
+          ✨ Brief
         </span>
         <span className={"text-xs font-semibold " + worthColor}>
           {WORTH_LABEL[data.worth]}
         </span>
       </div>
-      <p className="text-[15px] leading-relaxed">{data.verdict}</p>
+
+      {(data.thesis || data.summary.length > 0) && (
+        <div>
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-[color:var(--color-fg-muted)]">
+            The article
+          </div>
+          {data.thesis && (
+            <p className="text-[15px] font-medium leading-relaxed">{data.thesis}</p>
+          )}
+          {data.summary.length > 0 && (
+            <ul className="mt-1.5 list-disc space-y-1 pl-5 text-sm text-[color:var(--color-fg-muted)]">
+              {data.summary.map((b, i) => (
+                <li key={i}>{b}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
+      <div>
+        {(data.thesis || data.summary.length > 0) && (
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-[color:var(--color-fg-muted)]">
+            The thread
+          </div>
+        )}
+        <p className="text-[15px] leading-relaxed">{data.verdict}</p>
+      </div>
+
       {data.picks.length > 0 && (
         <ul className="space-y-2">
           {data.picks.map((p, i) => (
