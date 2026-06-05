@@ -34,7 +34,7 @@ export default function Popup() {
         </span>
       </div>
       <p className="mb-3.5 mt-2 text-xs text-[color:var(--color-fg-muted)]">
-        A calmer skin for Hacker News, rendered in place. Open
+        A configurable skin for Hacker News, rendered in place. Open
         news.ycombinator.com to use it.
       </p>
 

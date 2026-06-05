@@ -3,7 +3,7 @@
 Upload package: `build/chrome-mv3-prod.zip` (run `bun run plasmo:zip` to regenerate).
 
 ## Name
-Pretty Hacker News — a calmer skin for Hacker News
+Pretty Hacker News — a configurable skin for Hacker News
 
 ## Summary (≤132 chars)
 A calmer, modern Hacker News — in place. Themes, keyboard nav, inline article previews, and vote/comment on your own account.
