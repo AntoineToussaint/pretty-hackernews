@@ -11,6 +11,8 @@ type Props = {
   feeds?: { id: string; label: string }[];
   defaultFeed?: string;
   onDefaultFeedChange?: (id: string) => void;
+  /** Turn the reader off and show native Hacker News (in-place reader only). */
+  onDisableReader?: () => void;
 };
 
 const sectionTitle =
@@ -103,6 +105,7 @@ export function SettingsModal({
   feeds,
   defaultFeed,
   onDefaultFeedChange,
+  onDisableReader,
 }: Props) {
   const prefs = usePrefs();
   const [themeOpen, setThemeOpen] = useState(false);
@@ -262,6 +265,22 @@ export function SettingsModal({
             </span>
           </button>
         </div>
+
+        {onDisableReader && (
+          <div className="mt-6 border-t border-[color:var(--color-border)] pt-5">
+            <button
+              type="button"
+              onClick={onDisableReader}
+              className="w-full rounded-lg px-2.5 py-2 text-sm text-[color:var(--color-fg-muted)] ring-1 ring-[color:var(--color-border)] transition hover:text-[color:var(--color-fg)] hover:bg-[color:var(--color-bg-elev)]"
+            >
+              View regular Hacker News
+            </button>
+            <p className="mt-1.5 px-1 text-xs text-[color:var(--color-fg-muted)]">
+              Turns the skin off and shows native HN. Come back any time with the
+              “✨ Switch to Pretty HN” button.
+            </p>
+          </div>
+        )}
       </Overlay>
 
       {aiOpen && <AiSettingsModal onClose={() => setAiOpen(false)} />}

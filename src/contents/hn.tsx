@@ -74,6 +74,8 @@ export default function HNReader() {
   const [savedOpen, setSavedOpen] = useState(false);
   const [voteLinks, setVoteLinks] = useState<VoteLinks | null>(null);
   const [defaultFeed, setDefaultFeed] = useState("top");
+  // When off, we leave HN native (handy for "show me real HN" and debugging).
+  const [enabled, setEnabled] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const voteLinksRef = useRef<VoteLinks | null>(voteLinks);
   voteLinksRef.current = voteLinks;
@@ -104,6 +106,29 @@ export default function HNReader() {
   useEffect(() => {
     chrome.storage?.local.set({ theme });
   }, [theme]);
+
+  // Reader on/off — persisted, and synced across tabs (toggle in one tab
+  // updates the others). Off = native Hacker News.
+  useEffect(() => {
+    chrome.storage?.local.get("readerEnabled", (r) => {
+      if (r?.readerEnabled === false) setEnabled(false);
+    });
+    const onChange = (
+      changes: Record<string, { newValue?: unknown }>,
+      area: string,
+    ) => {
+      if (area === "local" && "readerEnabled" in changes) {
+        setEnabled(changes.readerEnabled.newValue !== false);
+      }
+    };
+    chrome.storage?.onChanged.addListener(onChange);
+    return () => chrome.storage?.onChanged.removeListener(onChange);
+  }, []);
+
+  const setReader = (on: boolean) => {
+    setEnabled(on);
+    chrome.storage?.local.set({ readerEnabled: on });
+  };
 
   // Console inspector — lets you poke at state and flip on verbose logging from
   // the page's DevTools console without a rebuild. Only on pages we actually
@@ -145,8 +170,9 @@ export default function HNReader() {
   };
 
   // Hide HN's native content while we're active (once — survives view changes).
+  // When the reader is disabled we leave HN's own DOM in place.
   useEffect(() => {
-    if (!active) return;
+    if (!active || !enabled) return;
     const hn = document.getElementById("hnmain") as HTMLElement | null;
     const prev = hn?.style.display ?? "";
     if (hn) hn.style.display = "none";
@@ -154,7 +180,7 @@ export default function HNReader() {
     return () => {
       if (hn) hn.style.display = prev;
     };
-  }, [active]);
+  }, [active, enabled]);
 
   // Back/forward buttons → re-derive the view from the URL.
   useEffect(() => {
@@ -200,6 +226,23 @@ export default function HNReader() {
   const openItem = (id: string) => navigate(`/item?id=${id}`);
 
   if (!route) return null; // native HN page — render nothing
+
+  // Reader turned off: leave native HN visible, offer a way back.
+  if (!enabled) {
+    return (
+      <div className={`theme-${theme}`}>
+        <button
+          type="button"
+          onClick={() => setReader(true)}
+          title="Re-enable the Pretty Hacker News reader"
+          style={{ position: "fixed", right: "16px", bottom: "16px", zIndex: 2147483600 }}
+          className="accent-bg flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-xl transition hover:opacity-90"
+        >
+          ✨ Switch to Pretty HN
+        </button>
+      </div>
+    );
+  }
 
   const { FeedView, ItemView } = hnSource;
 
@@ -250,6 +293,10 @@ export default function HNReader() {
           feeds={hnSource.feeds}
           defaultFeed={defaultFeed}
           onDefaultFeedChange={changeDefaultFeed}
+          onDisableReader={() => {
+            setSettingsOpen(false);
+            setReader(false);
+          }}
         />
       )}
       <main className="mx-auto max-w-3xl px-4 pb-24 pt-6 sm:pt-10">
