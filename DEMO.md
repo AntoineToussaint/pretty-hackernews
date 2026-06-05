@@ -31,7 +31,7 @@ Looping GIF for HN/Twitter: loop **0:05–0:13** (the theme morph). Keep < ~5MB.
 ## Show HN draft
 
 **Title:**
-> Show HN: Hatch – an open-source, local-first re-skin of Hacker News
+> Show HN: Pretty Hacker News – an open-source, local-first re-skin of Hacker News
 
 **Body:**
 
@@ -40,7 +40,7 @@ comment collapsing — without giving up the dense, fast layout I actually like.
 Most readers and redesigns "fix" HN by adding padding until a screen shows eight
 items instead of thirty. I didn't want that.
 
-So Hatch renders *in place* on news.ycombinator.com. Same URLs, same links, your
+So Pretty Hacker News renders *in place* on news.ycombinator.com. Same URLs, same links, your
 existing login — it just draws a cleaner UI over HN's own data. The default
 theme is a faithful, dense "Classic" look; calmer and themed looks (including a
 ridiculous Bloomberg terminal one) are one toggle away, and plain HN is always

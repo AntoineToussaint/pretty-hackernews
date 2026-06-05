@@ -80,7 +80,7 @@ function AiSettingsModal({ onClose }: { onClose: () => void }) {
       </div>
       {!isExtension() && (
         <div className="mb-4 rounded-lg border border-[color:var(--color-accent)]/40 bg-[color:var(--color-accent)]/10 p-3 text-xs leading-relaxed text-[color:var(--color-fg)]">
-          Preview only. AI runs in the installed Hatch extension, where your key
+          Preview only. AI runs in the installed Pretty Hacker News extension, where your key
           and every request stay in your browser and go straight to the provider
           you choose. It won't actually call a provider on this demo page.
         </div>
@@ -111,7 +111,7 @@ export function SettingsModal({
 
   return (
     <>
-      <Overlay label="Hatch settings" z={2147483640} onClose={onClose}>
+      <Overlay label="Pretty Hacker News settings" z={2147483640} onClose={onClose}>
         <div className="mb-5 flex items-center justify-between">
           <h2 className="text-lg font-semibold tracking-tight">Settings</h2>
           <CloseButton onClose={onClose} />

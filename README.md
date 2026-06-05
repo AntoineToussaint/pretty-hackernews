@@ -1,9 +1,9 @@
-# Hatch
+# Pretty Hacker News
 
 A calmer, modern reader for [Hacker News](https://news.ycombinator.com/) — that
 runs **in place on the real site**.
 
-Hatch is a browser extension that takes over news.ycombinator.com's feed and
+Pretty Hacker News is a browser extension that takes over news.ycombinator.com's feed and
 item pages and renders its own clean UI over HN's data: dark-by-default with a
 warm accent, threaded comments with depth-coloured guides, and a single reading
 column. Same URLs, same links, your existing HN login — so you can upvote,
@@ -156,7 +156,7 @@ src/
 
 ## Privacy & trust
 
-Hatch is local-first: it runs **no servers of its own** and **no analytics**.
+Pretty Hacker News is local-first: it runs **no servers of its own** and **no analytics**.
 The complete list of network calls it makes — and exactly what triggers each —
 is in [`public/privacy.html`](./public/privacy.html). The trust guarantees are
 also enforced mechanically in [`test/trust.test.ts`](./test/trust.test.ts),
@@ -164,12 +164,12 @@ which runs in CI: it asserts the code never reads `document.cookie`, only sends
 your logged-in session to Hacker News, fetches previews without cookies, and
 contacts no host outside a documented allowlist.
 
-**AI is opt-in.** With no API key, Hatch makes no AI calls of any kind. When you
+**AI is opt-in.** With no API key, Pretty Hacker News makes no AI calls of any kind. When you
 do enable it, requests go directly from your browser to the provider you chose
 (Anthropic or OpenAI) with **your** key — through no server of ours.
 
 **AI is for reading, never for speaking.** The AI features exist only to help
-you read: summarizing threads and matching stories to your interests. Hatch does
+you read: summarizing threads and matching stories to your interests. Pretty Hacker News does
 **not**, and per the project covenant in the [LICENSE](./LICENSE) **must never
 be updated to**, use AI to generate, draft, or post comments, replies, or
 submissions, or to vote, on anyone's behalf. Automating participation would

@@ -61,7 +61,7 @@ export function VoteProvider({
   const [voted, setVoted] = useState<Set<number>>(initialVoted);
   const [busy, setBusy] = useState<Set<number>>(() => new Set());
 
-  // Load our own persisted record of votes cast through Hatch, so we keep
+  // Load our own persisted record of votes cast through the extension, so we keep
   // showing "you voted" even on views where HN's DOM doesn't expose the
   // unvote link (e.g. feed pages often render only the up-arrow).
   useEffect(() => {

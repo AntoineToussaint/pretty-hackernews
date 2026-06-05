@@ -36,7 +36,7 @@ export const THEMES: ThemeMeta[] = [
   },
   {
     id: "hatch",
-    name: "Hatch",
+    name: "Ember",
     description: "Warm orange-pink, dark",
     swatch: ["#ff5c1a", "#ff2d8a"],
   },

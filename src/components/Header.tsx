@@ -54,7 +54,7 @@ export function Header({
           <path d="M9 9l7 8 7-8M16 17v8" />
         </svg>
       </span>
-      <span className="text-base font-semibold tracking-tight">Hatch</span>
+      <span className="text-base font-semibold tracking-tight">Pretty HN</span>
     </>
   );
   const logoClass = "group flex shrink-0 items-center gap-2.5";
@@ -67,12 +67,12 @@ export function Header({
             type="button"
             onClick={onHome}
             className={logoClass}
-            aria-label="Hatch — home"
+            aria-label="Pretty Hacker News — home"
           >
             {logoInner}
           </button>
         ) : (
-          <a href={homeHash} className={logoClass} aria-label="Hatch — home">
+          <a href={homeHash} className={logoClass} aria-label="Pretty Hacker News — home">
             {logoInner}
           </a>
         )}

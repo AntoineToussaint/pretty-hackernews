@@ -15,7 +15,7 @@ export default function Options() {
     <div className="min-h-screen px-5 py-10 text-[color:var(--color-fg)]">
       <div className="mx-auto max-w-xl">
         <h1 className="text-xl font-semibold tracking-tight">
-          Hatch — AI &amp; profile
+          Pretty Hacker News — AI &amp; profile
         </h1>
         <p className="mt-1.5 text-sm text-[color:var(--color-fg-muted)]">
           Bring your own key. It's stored only in this browser and used to call

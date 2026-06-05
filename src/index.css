@@ -12,7 +12,7 @@
 /* ---------- Themes ---------- */
 /* Each theme defines a complete palette and its color-scheme. */
 
-/* Hatch — warm dark (default) */
+/* Ember — warm dark */
 .theme-hatch {
   color-scheme: dark;
   --color-bg: #0a0a0c;

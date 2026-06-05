@@ -70,7 +70,7 @@ export function ArticlePeek({
     return (
       <div className={wrap + " text-sm text-[color:var(--color-fg-muted)]"}>
         Turn on <span className="text-[color:var(--color-fg)]">Article previews</span>{" "}
-        in the Hatch toolbar icon to read pages inline.{" "}
+        from the toolbar icon to read pages inline.{" "}
         <a
           href={url}
           target="_blank"

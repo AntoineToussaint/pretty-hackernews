@@ -29,11 +29,13 @@ export default function Popup() {
         <span className="accent-bg grid size-7 place-items-center rounded-[9px] font-extrabold text-white">
           H
         </span>
-        <span className="text-[15px] font-bold tracking-tight">Hatch</span>
+        <span className="text-[15px] font-bold tracking-tight">
+          Pretty Hacker News
+        </span>
       </div>
       <p className="mb-3.5 mt-2 text-xs text-[color:var(--color-fg-muted)]">
-        A calmer Hacker News, rendered in place. Open news.ycombinator.com to use
-        it.
+        A calmer skin for Hacker News, rendered in place. Open
+        news.ycombinator.com to use it.
       </p>
 
       <div className="card p-3">

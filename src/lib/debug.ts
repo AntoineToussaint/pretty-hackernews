@@ -6,7 +6,7 @@
 //   hatch.debug(false)    // stop
 //
 // Logs appear in the same tab's DevTools console. (The background service
-// worker has its own console: chrome://extensions → Hatch → "service worker".)
+// worker has its own console: chrome://extensions → Pretty Hacker News → "service worker".)
 
 const KEY = "hatch:debug";
 

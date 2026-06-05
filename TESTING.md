@@ -1,6 +1,6 @@
-# Try Hatch (pre-release)
+# Try Pretty Hacker News (pre-release)
 
-Hatch restyles Hacker News in place — same page, same login — into a calm,
+Pretty Hacker News restyles Hacker News in place — same page, same login — into a calm,
 modern reader. This is a pre-release test build (not yet on the Chrome Web
 Store), so it loads as an "unpacked" extension. Takes ~1 minute.
 
@@ -10,7 +10,7 @@ Store), so it loads as an "unpacked" extension. Takes ~1 minute.
 2. Go to `chrome://extensions` (type it in the address bar).
 3. Turn on **Developer mode** (top-right toggle).
 4. Click **Load unpacked** and select the **unzipped folder**.
-5. Open **https://news.ycombinator.com** — it's now Hatch. 🎉
+5. Open **https://news.ycombinator.com** — it's now Pretty Hacker News. 🎉
 
 ## Try this
 - Switch **themes** from the ⚙ icon (top-right).
@@ -24,5 +24,5 @@ Store), so it loads as an "unpacked" extension. Takes ~1 minute.
 ## Notes
 - It only changes news.ycombinator.com. Everything is local to your browser —
   no accounts, no servers, no tracking.
-- To remove it: `chrome://extensions` → Hatch → Remove.
+- To remove it: `chrome://extensions` → Pretty Hacker News → Remove.
 - Found a bug or have feedback? Reply to whoever sent you this. 🙏

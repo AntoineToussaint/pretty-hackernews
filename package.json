@@ -14,7 +14,7 @@
     "plasmo:build": "bun run css && plasmo build",
     "plasmo:zip": "bun run css && plasmo build --zip"
   },
-  "displayName": "Hatch — a calmer Hacker News",
+  "displayName": "Pretty Hacker News — a calmer skin for Hacker News",
   "manifest": {
     "host_permissions": [
       "https://news.ycombinator.com/*",

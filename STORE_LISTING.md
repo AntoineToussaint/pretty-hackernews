@@ -1,9 +1,9 @@
-# Chrome Web Store listing — Hatch
+# Chrome Web Store listing — Pretty Hacker News
 
 Upload package: `build/chrome-mv3-prod.zip` (run `bun run plasmo:zip` to regenerate).
 
 ## Name
-Hatch — a calmer Hacker News
+Pretty Hacker News — a calmer skin for Hacker News
 
 ## Summary (≤132 chars)
 A calmer, modern Hacker News — in place. Themes, keyboard nav, inline article previews, and vote/comment on your own account.
@@ -12,7 +12,7 @@ A calmer, modern Hacker News — in place. Themes, keyboard nav, inline article 
 Productivity (or News & Weather)
 
 ## Detailed description
-Hatch restyles news.ycombinator.com in place — same page, same links, your
+Pretty Hacker News restyles news.ycombinator.com in place — same page, same links, your
 existing login — into a calm, modern reader. It renders its own clean UI over
 HN's data, so you get a real design instead of a recolor.
 
