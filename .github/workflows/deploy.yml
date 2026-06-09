@@ -49,6 +49,9 @@ jobs:
           mkdir -p _site/demo _site/assets
           cp site/index.html _site/index.html
           cp public/privacy.html _site/privacy.html
+          cp public/favicon.svg _site/favicon.svg
+          cp site/robots.txt _site/robots.txt
+          cp site/sitemap.xml _site/sitemap.xml
           cp store-assets/*.png _site/assets/ 2>/dev/null || true
           cp -r dist/* _site/demo/
 
