@@ -1,13 +1,9 @@
 import "./compiled.css";
-import { useEffect, useState } from "react";
-
-const ORIGINS = ["*://*/*"];
+import { useEffect } from "react";
+import { PreviewSettingsCard } from "./components/PreviewSettingsCard";
 
 export default function Popup() {
-  const [enabled, setEnabled] = useState<boolean | null>(null);
-
   useEffect(() => {
-    chrome.permissions.contains({ origins: ORIGINS }, (g) => setEnabled(g));
     chrome.storage.local.get("theme", (r) =>
       document.documentElement.classList.add(
         `theme-${typeof r.theme === "string" ? r.theme : "classic"}`,
@@ -15,19 +11,22 @@ export default function Popup() {
     );
   }, []);
 
-  const toggle = () => {
-    if (enabled) {
-      chrome.permissions.remove({ origins: ORIGINS }, (ok) => ok && setEnabled(false));
-    } else {
-      chrome.permissions.request({ origins: ORIGINS }, (ok) => ok && setEnabled(true));
-    }
-  };
-
   return (
     <div className="w-[300px] p-4 text-[color:var(--color-fg)]">
       <div className="flex items-center gap-2.5">
-        <span className="accent-bg grid size-7 place-items-center rounded-[9px] font-extrabold text-white">
-          H
+        <span className="accent-bg grid size-7 place-items-center rounded-[9px] text-white">
+          <svg
+            viewBox="0 0 32 32"
+            className="size-[18px]"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M9 9l7 8 7-8M16 17v8" />
+          </svg>
         </span>
         <span className="text-[15px] font-bold tracking-tight">
           Pretty Hacker News
@@ -38,30 +37,7 @@ export default function Popup() {
         news.ycombinator.com to use it.
       </p>
 
-      <div className="card p-3">
-        <div className="text-[13px] font-semibold">Article previews</div>
-        <p className="my-1.5 text-xs text-[color:var(--color-fg-muted)]">
-          Lets the reader fetch a linked page to show a clean inline preview. Off
-          by default; a page is only fetched when you click “Preview”.
-        </p>
-        <button
-          type="button"
-          onClick={toggle}
-          disabled={enabled === null}
-          className={
-            "w-full rounded-full py-2 text-[13px] font-semibold transition disabled:opacity-50 " +
-            (enabled
-              ? "ring-1 ring-[color:var(--color-border)] text-[color:var(--color-fg)]"
-              : "accent-bg text-white")
-          }
-        >
-          {enabled === null
-            ? "…"
-            : enabled
-              ? "Previews enabled — turn off"
-              : "Enable article previews"}
-        </button>
-      </div>
+      <PreviewSettingsCard />
 
       <button
         type="button"

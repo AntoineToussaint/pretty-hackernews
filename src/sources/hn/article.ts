@@ -39,6 +39,14 @@ function fetchHtml(url: string): Promise<string | null> {
   });
 }
 
+/** Open the extension's settings page, where previews can be enabled in one
+ *  click. Content scripts can't call chrome.permissions.request themselves, so
+ *  the in-page prompt routes the user to an extension page that can. */
+export function openPreviewSettings(): void {
+  const runtime = isExtension() ? getRuntime() : null;
+  runtime?.sendMessage({ type: "hatch-open-options" }, () => void 0);
+}
+
 /** Whether the user has granted the optional permission needed for previews. */
 export function hasPreviewPermission(): Promise<boolean> {
   const runtime = isExtension() ? getRuntime() : null;

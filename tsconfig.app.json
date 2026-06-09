@@ -24,6 +24,7 @@
     "src/background.ts",
     "src/popup.tsx",
     "src/options.tsx",
+    "src/components/PreviewSettingsCard.tsx",
     "src/compiled.css"
   ]
 }

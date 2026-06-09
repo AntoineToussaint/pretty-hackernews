@@ -1,5 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { hasPreviewPermission, loadArticle, type Article } from "./article";
+import {
+  hasPreviewPermission,
+  loadArticle,
+  openPreviewSettings,
+  type Article,
+} from "./article";
+import { isExtension } from "../../lib/runtime";
 
 type State =
   | { status: "loading" }
@@ -18,7 +24,11 @@ export function ArticlePeek({
   const [state, setState] = useState<State>({ status: "loading" });
   const [full, setFull] = useState(false);
   const [imgOk, setImgOk] = useState(true);
+  const [recheck, setRecheck] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
+  // Track the latest status without re-binding the visibility listener.
+  const statusRef = useRef(state.status);
+  statusRef.current = state.status;
   const wrap =
     variant === "card"
       ? "card p-4 sm:p-5"
@@ -64,21 +74,57 @@ export function ArticlePeek({
     return () => {
       cancelled = true;
     };
-  }, [url]);
+  }, [url, recheck]);
+
+  // If the user enabled previews on the settings page and tabs back to HN,
+  // re-check the permission automatically so they don't have to click Preview
+  // again. Only fires while we're actually waiting on the permission.
+  useEffect(() => {
+    const onVisible = () => {
+      if (
+        document.visibilityState === "visible" &&
+        statusRef.current === "needs-permission"
+      ) {
+        setRecheck((c) => c + 1);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => document.removeEventListener("visibilitychange", onVisible);
+  }, []);
 
   if (state.status === "needs-permission") {
     return (
       <div className={wrap + " text-sm text-[color:var(--color-fg-muted)]"}>
-        Turn on <span className="text-[color:var(--color-fg)]">Article previews</span>{" "}
-        from the toolbar icon to read pages inline.{" "}
-        <a
-          href={url}
-          target="_blank"
-          rel="noreferrer"
-          className="text-[color:var(--color-accent)] underline-offset-2 hover:underline"
-        >
-          Open it ↗
-        </a>
+        <p>
+          <span className="text-[color:var(--color-fg)]">Article previews are off.</span>{" "}
+          Turn them on to read the linked page right here — a page is only fetched
+          when you click Preview, and nothing is sent to us.
+        </p>
+        <div className="mt-2.5 flex flex-wrap items-center gap-3">
+          {isExtension() && (
+            <button
+              type="button"
+              onClick={openPreviewSettings}
+              className="accent-bg rounded-full px-3.5 py-1.5 text-[13px] font-semibold text-white transition hover:opacity-90"
+            >
+              Enable previews →
+            </button>
+          )}
+          <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="text-[color:var(--color-accent)] underline-offset-2 hover:underline"
+          >
+            Open the page ↗
+          </a>
+        </div>
+        {isExtension() && (
+          <p className="mt-2 text-xs">
+            Opens settings → click <em>Enable article previews</em> → Allow. Come
+            back to this tab and it loads automatically.
+          </p>
+        )}
       </div>
     );
   }

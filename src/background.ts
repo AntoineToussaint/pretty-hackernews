@@ -105,6 +105,15 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     return true;
   }
 
+  // Content scripts can't call chrome.permissions.request (only extension pages
+  // can), so the in-page preview prompt asks us to open the settings page, which
+  // hosts a one-click enable button.
+  if (msg?.type === "hatch-open-options") {
+    chrome.runtime.openOptionsPage();
+    sendResponse({ ok: true });
+    return true;
+  }
+
   // Is the AI configured? (key kept in the background; not exposed to content.)
   if (msg?.type === "hatch-ai-status") {
     chrome.storage.local.get(["aiKey"], (r) =>
