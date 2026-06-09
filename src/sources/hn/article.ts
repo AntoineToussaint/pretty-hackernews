@@ -59,6 +59,62 @@ export function hasPreviewPermission(): Promise<boolean> {
   });
 }
 
+/**
+ * Resolve the relative URLs in Readability's extracted HTML against the
+ * article's origin. Readability returns a detached HTML string, so when it's
+ * injected into the HN page relative src/href would otherwise resolve against
+ * news.ycombinator.com (→ 404, then hidden) instead of the article. Also folds
+ * lazy-load attrs into src and drops the referrer so hotlink-protected images
+ * still load.
+ */
+function absolutizeUrls(contentHtml: string, base: string): string {
+  const resolve = (value: string | null): string | null => {
+    if (!value) return null;
+    try {
+      return new URL(value, base).href;
+    } catch {
+      return null;
+    }
+  };
+  const d = new DOMParser().parseFromString(contentHtml, "text/html");
+
+  d.querySelectorAll("img").forEach((img) => {
+    const lazy =
+      img.getAttribute("data-src") ||
+      img.getAttribute("data-original") ||
+      img.getAttribute("data-lazy-src");
+    const raw = img.getAttribute("src");
+    // Prefer a real src; fall back to the lazy attr when src is missing or a
+    // data: placeholder.
+    const pick = raw && !raw.startsWith("data:") ? raw : lazy || raw;
+    const abs = resolve(pick);
+    if (abs) img.setAttribute("src", abs);
+
+    const srcset = img.getAttribute("srcset");
+    if (srcset) {
+      const fixed = srcset
+        .split(",")
+        .map((part) => {
+          const [u, ...descriptor] = part.trim().split(/\s+/);
+          const absU = resolve(u);
+          return absU ? [absU, ...descriptor].join(" ") : null;
+        })
+        .filter(Boolean)
+        .join(", ");
+      if (fixed) img.setAttribute("srcset", fixed);
+      else img.removeAttribute("srcset");
+    }
+    img.setAttribute("referrerpolicy", "no-referrer");
+  });
+
+  d.querySelectorAll("a[href]").forEach((a) => {
+    const abs = resolve(a.getAttribute("href"));
+    if (abs) a.setAttribute("href", abs);
+  });
+
+  return d.body.innerHTML;
+}
+
 /** Extract a clean, sanitized article from raw HTML. */
 function parse(html: string, url: string): Article | null {
   const doc = new DOMParser().parseFromString(html, "text/html");
@@ -86,7 +142,7 @@ function parse(html: string, url: string): Article | null {
   return {
     title: parsed.title ?? null,
     image,
-    html: DOMPurify.sanitize(parsed.content),
+    html: DOMPurify.sanitize(absolutizeUrls(parsed.content, url)),
     excerpt: parsed.excerpt ?? null,
   };
 }

@@ -161,6 +161,7 @@ export function ArticlePeek({
           src={article.image}
           alt=""
           loading="lazy"
+          referrerPolicy="no-referrer"
           onError={() => setImgOk(false)}
           className="mb-3 h-44 w-full rounded-lg object-cover"
         />

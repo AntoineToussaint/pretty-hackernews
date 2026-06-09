@@ -1,4 +1,3 @@
-import { useEffect, useRef, useState } from "react";
 import type { StoryHit } from "./api";
 import { Upvote } from "./voteContext";
 import { useSeen } from "./seenContext";
@@ -13,9 +12,20 @@ type Props = {
   rank: number;
   onOpen: () => void;
   selected?: boolean;
+  /** Whether this card's article preview is expanded (owned by the feed). */
+  peekOpen?: boolean;
+  /** Toggle this card's preview; switching off another open one is the feed's job. */
+  onPeekToggle?: () => void;
 };
 
-export function StoryCard({ hit, rank, onOpen, selected = false }: Props) {
+export function StoryCard({
+  hit,
+  rank,
+  onOpen,
+  selected = false,
+  peekOpen = false,
+  onPeekToggle,
+}: Props) {
   const host = hostname(hit.url);
   const points = hit.points ?? 0;
   const comments = hit.num_comments ?? 0;
@@ -28,23 +38,7 @@ export function StoryCard({ hit, rank, onOpen, selected = false }: Props) {
   const ageHours = Math.max(0.5, (Date.now() / 1000 - hit.created_at_i) / 3600);
   const velocity = Math.round((points + comments) / ageHours);
   const isHot = velocity >= 50;
-  const [peekOpen, setPeekOpen] = useState(false);
   const canPeek = !!hit.url && isExtension();
-  const articleRef = useRef<HTMLElement>(null);
-
-  // Close the preview when clicking anywhere outside this card. composedPath
-  // pierces the shadow DOM so the check works inside the in-place reader.
-  useEffect(() => {
-    if (!peekOpen) return;
-    const onDown = (e: Event) => {
-      const path = (e.composedPath?.() ?? []) as EventTarget[];
-      if (articleRef.current && !path.includes(articleRef.current)) {
-        setPeekOpen(false);
-      }
-    };
-    window.addEventListener("pointerdown", onDown);
-    return () => window.removeEventListener("pointerdown", onDown);
-  }, [peekOpen]);
   const open = () => {
     seen.markSeen(id);
     onOpen();
@@ -52,7 +46,6 @@ export function StoryCard({ hit, rank, onOpen, selected = false }: Props) {
 
   return (
     <article
-      ref={articleRef}
       className={
         "card group relative overflow-hidden p-4 transition hover:border-[color:var(--color-fg-muted)]/40 sm:p-5 " +
         (isSeen ? "opacity-[.55] " : "") +
@@ -170,7 +163,7 @@ export function StoryCard({ hit, rank, onOpen, selected = false }: Props) {
             {canPeek && (
               <button
                 type="button"
-                onClick={() => setPeekOpen((p) => !p)}
+                onClick={onPeekToggle}
                 aria-expanded={peekOpen}
                 className={
                   "inline-flex items-center gap-1 font-medium transition " +

@@ -23,6 +23,10 @@ export function Feed({ feedId, onOpenItem }: FeedViewProps) {
   const [selected, setSelected] = useState(-1);
   const selectedRef = useRef(-1);
   const listRef = useRef<HTMLUListElement>(null);
+  // Which card's article preview is open (objectID), owned here so only one is
+  // open at a time and switching between them is a single atomic state change —
+  // no close-then-reopen race when clicking another card's Preview button.
+  const [openPeek, setOpenPeek] = useState<string | null>(null);
 
   useEffect(() => {
     selectedRef.current = selected;
@@ -31,7 +35,21 @@ export function Feed({ feedId, onOpenItem }: FeedViewProps) {
   // reset selection when switching feeds
   useEffect(() => {
     setSelected(-1);
+    setOpenPeek(null);
   }, [feedId]);
+
+  // Close the open preview only when clicking fully outside the feed list.
+  // Clicks on another card (incl. its Preview button) stay inside the list, so
+  // they fall through to that button and just switch which preview is open.
+  useEffect(() => {
+    if (!openPeek) return;
+    const onDown = (e: Event) => {
+      const path = (e.composedPath?.() ?? []) as EventTarget[];
+      if (listRef.current && !path.includes(listRef.current)) setOpenPeek(null);
+    };
+    window.addEventListener("pointerdown", onDown);
+    return () => window.removeEventListener("pointerdown", onDown);
+  }, [openPeek]);
 
   // keyboard navigation: j/k move, o/Enter/c open, u upvote
   useEffect(() => {
@@ -113,6 +131,10 @@ export function Feed({ feedId, onOpenItem }: FeedViewProps) {
               rank={i + 1}
               selected={i === selected}
               onOpen={() => onOpenItem(hit.objectID)}
+              peekOpen={openPeek === hit.objectID}
+              onPeekToggle={() =>
+                setOpenPeek((p) => (p === hit.objectID ? null : hit.objectID))
+              }
             />
           </li>
         ))}
