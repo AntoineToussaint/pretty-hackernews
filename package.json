@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "description": "A calmer, modern Hacker News — in place. Themes, keyboard nav, inline article previews, and vote/comment on your own account.",
   "scripts": {
     "dev": "vite",
     "test": "bun test",
