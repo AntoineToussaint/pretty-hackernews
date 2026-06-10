@@ -118,7 +118,14 @@ export default function HNReader() {
       area: string,
     ) => {
       if (area === "local" && "readerEnabled" in changes) {
-        setEnabled(changes.readerEnabled.newValue !== false);
+        const on = changes.readerEnabled.newValue !== false;
+        setEnabled(on);
+        // After client-side navs, HN's DOM under the overlay is still the
+        // originally-loaded page; reload so native HN matches the URL. Runs
+        // here (post-commit) so the reload can't outrun the storage write.
+        if (!on && location.pathname + location.search !== initialUrl.current) {
+          location.reload();
+        }
       }
     };
     chrome.storage?.onChanged.addListener(onChange);
@@ -179,6 +186,7 @@ export default function HNReader() {
     document.documentElement.style.background = "#0a0a0c";
     return () => {
       if (hn) hn.style.display = prev;
+      document.documentElement.style.background = "";
     };
   }, [active, enabled]);
 

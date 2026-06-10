@@ -30,6 +30,8 @@ export type Source = {
   defaultFeed: string;
   /** Placeholder for the header's open-by-link box; omit to hide the box. */
   searchPlaceholder?: string;
+  /** Where to submit a new story; omit to hide the header's Submit link. */
+  submitUrl?: string;
   /** Parse a pasted link or id into an item id this source can open. */
   parseItemId?: (input: string) => string | null;
   /** The source's own feed (list) skin. */

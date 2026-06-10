@@ -171,9 +171,30 @@ export function Header({
               </button>
             );
           })}
+          {activeSource.submitUrl && <SubmitLink href={activeSource.submitUrl} />}
         </nav>
       )}
     </header>
+  );
+}
+
+/**
+ * "Submit a story" link at the end of the feed tabs. In the in-place reader the
+ * URL is same-origin, so it's a real navigation to HN's native /submit page
+ * (which we deliberately don't skin); on the web app it opens HN in a new tab.
+ */
+function SubmitLink({ href }: { href: string }) {
+  const external = new URL(href, location.href).origin !== location.origin;
+  return (
+    <a
+      href={href}
+      target={external ? "_blank" : undefined}
+      rel={external ? "noreferrer" : undefined}
+      className="ml-auto flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium text-[color:var(--color-fg-muted)] ring-1 ring-[color:var(--color-border)] transition hover:text-[color:var(--color-fg)]"
+    >
+      <span aria-hidden="true">+</span>
+      Submit
+    </a>
   );
 }
 

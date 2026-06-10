@@ -28,6 +28,7 @@ export const hnSource: Source = {
   ],
   defaultFeed: "top",
   searchPlaceholder: "Paste an HN link or item ID…",
+  submitUrl: "https://news.ycombinator.com/submit",
   parseItemId: parseHnId,
   FeedView: Feed,
   ItemView: Story,
