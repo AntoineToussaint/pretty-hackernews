@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { onLayoutSettled } from "../../lib/layout";
 import type { StoryItem } from "./api";
 import {
   aiConfigured,
@@ -10,7 +11,10 @@ import {
 // Scroll to the picked comment (by id, falling back to author) and flash it.
 // Queries the shadow root the digest lives in, not the page document. First
 // broadcasts a reveal request so any collapsed ancestor expands, then polls for
-// the target to mount (expansion re-renders asynchronously) before scrolling.
+// the target to mount (expansion re-renders asynchronously). Once mounted, we
+// wait for its position to stop shifting before scrolling: expanding ancestors
+// reflow the layout above the target over several frames, and a smooth scroll
+// started mid-reflow animates toward a now-stale offset and lands off-target.
 function jumpToComment(root: Document | ShadowRoot, pick: DigestPick): void {
   const sel = pick.id
     ? `[data-comment-id="${pick.id}"]`
@@ -29,9 +33,14 @@ function jumpToComment(root: Document | ShadowRoot, pick: DigestPick): void {
   const go = () => {
     const el = root.querySelector<HTMLElement>(sel);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-      el.classList.add("hatch-flash");
-      setTimeout(() => el.classList.remove("hatch-flash"), 1600);
+      onLayoutSettled(
+        () => el.getBoundingClientRect().top,
+        () => {
+          el.scrollIntoView({ behavior: "smooth", block: "center" });
+          el.classList.add("hatch-flash");
+          setTimeout(() => el.classList.remove("hatch-flash"), 1600);
+        },
+      );
     } else if (tries++ < 12) {
       setTimeout(go, 50); // wait for collapsed ancestors to expand + mount
     }
